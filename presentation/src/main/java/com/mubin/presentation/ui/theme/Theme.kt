@@ -1,6 +1,5 @@
-package com.mubin.myimdb.ui.theme
+package com.mubin.presentation.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

@@ -1,4 +1,4 @@
-package com.mubin.myimdb.ui.theme
+package com.mubin.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

@@ -21,3 +21,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "MyIMDB"
 include(":app")
+include(":presentation")
+include(":domain")
+include(":data")
+include(":core:common")
+include(":core:network")
+include(":core:database")
