@@ -48,10 +48,11 @@ android {
 dependencies {
     implementation(project(":presentation"))
     implementation(project(":domain"))
-    implementation(project(":data"))
-    implementation(project(":core:common"))
+    implementation(project(":core:data"))
     implementation(project(":core:network"))
     implementation(project(":core:database"))
+
+    implementation(libs.androidx.activity.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
