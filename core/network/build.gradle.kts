@@ -39,10 +39,10 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:common"))
     implementation(libs.retrofit)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.okhttpprofiler)
     implementation(libs.gson)
     implementation(libs.gson.converter)
     implementation(libs.hilt.android)
