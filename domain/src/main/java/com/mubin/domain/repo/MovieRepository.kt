@@ -13,6 +13,10 @@ interface MovieRepository {
 
     suspend fun getMoviesByGenrePaginated(genre: String, limit: Int, offset: Int): List<Movie>
 
+    suspend fun getMoviesByQueryPaginated(query: String, limit: Int, offset: Int): List<Movie>
+
+    suspend fun getMoviesByQueryAndGenrePaginated(genre: String, query: String, limit: Int, offset: Int): List<Movie>
+
     suspend fun getMovieById(id: Int): Movie?
 
     suspend fun updateWishlistStatus(id: Int, status: Boolean)
