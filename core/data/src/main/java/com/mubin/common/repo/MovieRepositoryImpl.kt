@@ -45,6 +45,10 @@ class MovieRepositoryImpl(
         }
     }
 
+    override suspend fun getTotalMovieCount(): Int {
+        return movieDao.getMovieCount()
+    }
+
     override suspend fun getMoviesPaginated(limit: Int, offset: Int): List<Movie> {
         return movieDao.getMoviesPaginated(limit, offset).map { it.toDomain() }
     }

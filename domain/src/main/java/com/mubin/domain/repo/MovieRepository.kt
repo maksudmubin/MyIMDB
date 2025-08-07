@@ -7,6 +7,8 @@ interface MovieRepository {
 
     suspend fun syncMoviesIfNeeded(): NetworkResult<Unit>
 
+    suspend fun getTotalMovieCount(): Int
+
     suspend fun getMoviesPaginated(limit: Int, offset: Int): List<Movie>
 
     suspend fun getMoviesByGenrePaginated(genre: String, limit: Int, offset: Int): List<Movie>
