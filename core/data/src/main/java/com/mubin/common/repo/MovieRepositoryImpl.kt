@@ -57,6 +57,14 @@ class MovieRepositoryImpl(
         return movieDao.getMoviesByGenrePaginated(genre, limit, offset).map { it.toDomain() }
     }
 
+    override suspend fun getMoviesByQueryPaginated(query: String, limit: Int, offset: Int): List<Movie> {
+        return  movieDao.searchMoviesPaginated(query, limit, offset).map { it.toDomain() }
+    }
+
+    override suspend fun getMoviesByQueryAndGenrePaginated(genre: String, query: String, limit: Int, offset: Int): List<Movie> {
+        return movieDao.searchMoviesByGenrePaginated(genre, query, limit, offset).map { it.toDomain() }
+    }
+
     override suspend fun getMovieById(id: Int): Movie? {
         return movieDao.getMovieById(id)?.toDomain()
     }
