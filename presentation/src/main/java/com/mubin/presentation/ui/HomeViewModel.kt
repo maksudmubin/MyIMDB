@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.mubin.domain.usecase.GetAllGenresUseCase
 import com.mubin.domain.usecase.GetMovieByIdUseCase
 import com.mubin.domain.usecase.GetMoviesByGenrePaginatedUseCase
+import com.mubin.domain.usecase.GetMoviesByQueryAndGenrePaginatedUseCase
+import com.mubin.domain.usecase.GetMoviesByQueryPaginatedUseCase
 import com.mubin.domain.usecase.GetMoviesPaginatedUseCase
 import com.mubin.domain.usecase.GetTotalMovieCountUseCase
 import com.mubin.domain.usecase.GetWishlistUseCase
@@ -27,6 +29,8 @@ class HomeViewModel @Inject constructor(
     private val getTotalMovieCount: GetTotalMovieCountUseCase,
     private val getMoviesPaginated: GetMoviesPaginatedUseCase,
     private val getMoviesByGenrePaginated: GetMoviesByGenrePaginatedUseCase,
+    private val getMoviesByQueryPaginated: GetMoviesByQueryPaginatedUseCase,
+    private val getMoviesByQueryAndGenrePaginated: GetMoviesByQueryAndGenrePaginatedUseCase,
     private val getMovieById: GetMovieByIdUseCase,
     private val updateWishlistStatus: UpdateWishlistStatusUseCase,
     private val getWishlist: GetWishlistUseCase,
@@ -90,10 +94,26 @@ class HomeViewModel @Inject constructor(
 
     fun loadNextMovies() {
         viewModelScope.launch {
-            val newMovies = if (_uiState.value.selectedGenre == null) {
-                getMoviesPaginated(pageSize, currentOffset)
-            } else {
-                getMoviesByGenrePaginated(_uiState.value.selectedGenre!!, pageSize, currentOffset)
+            val state = _uiState.value
+
+            val newMovies = when {
+                state.searchQuery.isNotBlank() && state.selectedGenre != null -> {
+                    getMoviesByQueryAndGenrePaginated(
+                        genre = state.selectedGenre,
+                        query = state.searchQuery,
+                        limit = pageSize,
+                        offset = currentOffset
+                    )
+                }
+                state.searchQuery.isNotBlank() -> {
+                    getMoviesByQueryPaginated(state.searchQuery, pageSize, currentOffset)
+                }
+                state.selectedGenre != null -> {
+                    getMoviesByGenrePaginated(state.selectedGenre, pageSize, currentOffset)
+                }
+                else -> {
+                    getMoviesPaginated(pageSize, currentOffset)
+                }
             }
 
             currentOffset += pageSize
@@ -101,8 +121,7 @@ class HomeViewModel @Inject constructor(
             _uiState.update {
                 val updatedList = it.movieList + newMovies
                 it.copy(
-                    movieList = updatedList,
-                    filteredMovies = applySearchFilter(updatedList, it.searchQuery)
+                    movieList = updatedList
                 )
             }
         }
@@ -111,9 +130,9 @@ class HomeViewModel @Inject constructor(
     fun onGenreSelected(genre: String?) {
         _uiState.update {
             it.copy(
+                searchQuery = "",
                 selectedGenre = genre,
-                movieList = emptyList(),
-                filteredMovies = emptyList()
+                movieList = emptyList()
             )
         }
         currentOffset = 0
@@ -124,17 +143,11 @@ class HomeViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 searchQuery = query,
-                filteredMovies = applySearchFilter(it.movieList, query)
+                movieList = emptyList()
             )
         }
-    }
-
-    private fun applySearchFilter(list: List<Movie>, query: String): List<Movie> {
-        return if (query.isBlank()) list
-        else list.filter {
-            it.title.contains(query, ignoreCase = true) ||
-                    it.plot.contains(query, ignoreCase = true)
-        }
+        currentOffset = 0
+        loadNextMovies()
     }
 
     fun onWishlistToggle(id: Int, status: Boolean) {
