@@ -4,6 +4,8 @@ import com.mubin.domain.repo.MovieRepository
 import com.mubin.domain.usecase.GetAllGenresUseCase
 import com.mubin.domain.usecase.GetMovieByIdUseCase
 import com.mubin.domain.usecase.GetMoviesByGenrePaginatedUseCase
+import com.mubin.domain.usecase.GetMoviesByQueryAndGenrePaginatedUseCase
+import com.mubin.domain.usecase.GetMoviesByQueryPaginatedUseCase
 import com.mubin.domain.usecase.GetMoviesPaginatedUseCase
 import com.mubin.domain.usecase.GetTotalMovieCountUseCase
 import com.mubin.domain.usecase.GetWishlistUseCase
@@ -34,6 +36,14 @@ object UseCaseModule {
     @Provides
     fun provideGetMoviesByGenrePaginatedUseCase(repository: MovieRepository) =
         GetMoviesByGenrePaginatedUseCase(repository)
+
+    @Provides
+    fun provideGetMoviesByQueryPaginatedUseCase(repository: MovieRepository) =
+        GetMoviesByQueryPaginatedUseCase(repository)
+
+    @Provides
+    fun provideGetMoviesByQueryAndGenrePaginatedUseCase(repository: MovieRepository) =
+        GetMoviesByQueryAndGenrePaginatedUseCase(repository)
 
     @Provides
     fun provideGetMovieByIdUseCase(repository: MovieRepository) =
