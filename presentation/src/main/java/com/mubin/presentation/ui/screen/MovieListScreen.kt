@@ -8,15 +8,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -28,24 +31,24 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -68,6 +71,8 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -98,9 +103,8 @@ fun MovieListScreen(
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .distinctUntilChanged()
-            .collect { lastVisibleItemIndex ->
-                val totalItems = uiState.movieList.size
-                if (lastVisibleItemIndex != null && lastVisibleItemIndex >= totalItems - 1) {
+            .collect { index ->
+                if (index != null && index >= uiState.movieList.size - 1) {
                     viewModel.loadNextMovies()
                 }
             }
@@ -109,9 +113,8 @@ fun MovieListScreen(
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .distinctUntilChanged()
-            .collect { lastVisibleItemIndex ->
-                val totalItems = uiState.movieList.size
-                if (lastVisibleItemIndex != null && lastVisibleItemIndex >= totalItems - 1) {
+            .collect { index ->
+                if (index != null && index >= uiState.movieList.size - 1) {
                     viewModel.loadNextMovies()
                 }
             }
@@ -128,21 +131,25 @@ fun MovieListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("MyIMDB", fontWeight = FontWeight.Bold) },
+                title = { Text("MyIMDB", fontWeight = FontWeight.SemiBold, fontSize = 20.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 actions = {
-                    Box {
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                    ) {
                         IconButton(onClick = onNavigateToWishlist) {
                             Icon(Icons.Default.Favorite, contentDescription = "Wishlist")
                         }
                         if (uiState.wishlist.isNotEmpty()) {
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .padding(top = 4.dp, end = 4.dp)
+                                    .size(18.dp)
                                     .background(Color.Red, CircleShape)
                                     .align(Alignment.TopEnd)
                             ) {
@@ -151,11 +158,19 @@ fun MovieListScreen(
                                     text = uiState.wishlist.size.toString(),
                                     color = Color.White,
                                     fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        platformStyle = PlatformTextStyle(
+                                            includeFontPadding = false
+                                        )
+                                    )
                                 )
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.width(4.dp))
 
                     DropdownMenuGenreFilter(
                         selectedGenre = uiState.selectedGenre.orEmpty(),
@@ -174,51 +189,105 @@ fun MovieListScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Theme toggle, search bar, and view toggle
             Row(
                 modifier = Modifier
-                    .background(color = MaterialTheme.colorScheme.background)
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                IconButton(onClick = onToggleTheme) {
+                Row(
+                    modifier = Modifier
+                        .height(48.dp) // match height
+                        .clip(RoundedCornerShape(8.dp)) // match radius
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { onToggleTheme() }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Icon(
-                        painter = painterResource(if (isDarkTheme) R.drawable.ic_dark_mode else R.drawable.ic_light_mode),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        contentDescription = "Toggle Theme"
+                        painter = painterResource(R.drawable.ic_dark_mode),
+                        contentDescription = "Dark Mode",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier.height(IntrinsicSize.Min)
+                    ) {
+                        Text(
+                            text = "Dark Mode",
+                            fontSize = 12.sp,
+                            lineHeight = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = if (isDarkTheme) "ON" else "OFF",
+                            fontSize = 10.sp,
+                            lineHeight = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isDarkTheme) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 CustomSearchBar(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(start = 8.dp),
+                        .height(48.dp),
                     query = uiState.searchQuery,
-                    onQueryChange = { query ->
-                        viewModel.onSearchQueryChanged(query)
-                    }
+                    onQueryChange = viewModel::onSearchQueryChanged
                 )
 
-                IconButton(onClick = {
-                    if (isGridView) {
-                        lastVisibleIndex = gridState.firstVisibleItemIndex
-                        lastVisibleOffset = gridState.firstVisibleItemScrollOffset
-                    } else {
-                        lastVisibleIndex = listState.firstVisibleItemIndex
-                        lastVisibleOffset = listState.firstVisibleItemScrollOffset
-                    }
-                    isGridView = !isGridView
-                }) {
+                Row(
+                    modifier = Modifier
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable {
+                            if (isGridView) {
+                                lastVisibleIndex = gridState.firstVisibleItemIndex
+                                lastVisibleOffset = gridState.firstVisibleItemScrollOffset
+                            } else {
+                                lastVisibleIndex = listState.firstVisibleItemIndex
+                                lastVisibleOffset = listState.firstVisibleItemScrollOffset
+                            }
+                            isGridView = !isGridView
+                        }
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Icon(
                         painter = painterResource(if (isGridView) R.drawable.ic_list else R.drawable.ic_grid),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        contentDescription = "Toggle View"
+                        contentDescription = "Toggle View",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier.height(IntrinsicSize.Min)
+                    ) {
+                        Text(
+                            text = "View Mode",
+                            fontSize = 12.sp,
+                            lineHeight = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = if (isGridView) "Grid" else "List",
+                            fontSize = 10.sp,
+                            lineHeight = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
-            // Movie grid/list
             if (isGridView) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
@@ -226,7 +295,12 @@ fun MovieListScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        top = 8.dp,
+                        end = 16.dp,
+                        bottom = 16.dp
+                    ),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -243,8 +317,13 @@ fun MovieListScreen(
 
                     if (uiState.isLoading) {
                         item(span = { GridItemSpan(2) }) {
-                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
                             }
                         }
                     }
@@ -255,7 +334,13 @@ fun MovieListScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background),
-                    contentPadding = PaddingValues(16.dp)
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        top = 8.dp,
+                        end = 16.dp,
+                        bottom = 16.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(uiState.movieList) { movie ->
                         MovieItem(
@@ -270,8 +355,13 @@ fun MovieListScreen(
 
                     if (uiState.isLoading) {
                         item {
-                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
                             }
                         }
                     }
@@ -281,7 +371,7 @@ fun MovieListScreen(
     }
 }
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownMenuGenreFilter(
     selectedGenre: String,
@@ -290,30 +380,60 @@ fun DropdownMenuGenreFilter(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box {
-        TextButton(onClick = { expanded = true }) {
-            Text(text = selectedGenre.ifBlank { "All Genres" })
-            Icon(Icons.Default.ArrowDropDown, contentDescription = "Select Genre")
-        }
+    ExposedDropdownMenuBox(
+        modifier = Modifier
+            .padding(bottom = 8.dp),
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            modifier = Modifier
+                .menuAnchor(MenuAnchorType.PrimaryEditable, true)
+                .widthIn(min = 120.dp)
+                .height(56.dp), // match search bar height
+            value = selectedGenre.ifBlank { "All Genres" },
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Genre") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            shape = RoundedCornerShape(8.dp), // match search bar corner
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            ),
+            textStyle = MaterialTheme.typography.bodyLarge
+        )
 
-        DropdownMenu(
+        ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            DropdownMenuItem(text = { Text("All Genres") }, onClick = {
-                expanded = false
-                onGenreSelected("")
-            })
-            genres.forEach { genre ->
-                DropdownMenuItem(text = { Text(genre) }, onClick = {
+            DropdownMenuItem(
+                text = { Text("All Genres") },
+                onClick = {
                     expanded = false
-                    onGenreSelected(genre)
-                })
+                    onGenreSelected("")
+                }
+            )
+            genres.forEach { genre ->
+                DropdownMenuItem(
+                    text = { Text(genre) },
+                    onClick = {
+                        expanded = false
+                        onGenreSelected(genre)
+                    }
+                )
             }
         }
     }
 }
-
 
 @Composable
 fun CustomSearchBar(
@@ -324,13 +444,26 @@ fun CustomSearchBar(
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        placeholder = { Text("Search movies...") },
+        placeholder = {
+            Text(
+                text = "Search movies...",
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
         singleLine = true,
         leadingIcon = {
-            Icon(imageVector = Icons.Default.Search, contentDescription = null)
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null
+            )
         },
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(8.dp),
+        textStyle = MaterialTheme.typography.bodyLarge,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -344,6 +477,7 @@ fun CustomSearchBar(
         )
     )
 }
+
 
 @Composable
 fun MovieItem(
