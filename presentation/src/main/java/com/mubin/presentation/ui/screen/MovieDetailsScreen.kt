@@ -47,6 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -102,7 +104,8 @@ fun MovieDetailsScreen(
                         if (uiState.wishlist.isNotEmpty()) {
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .padding(top = 4.dp, end = 4.dp)
+                                    .size(18.dp)
                                     .background(Color.Red, CircleShape)
                                     .align(Alignment.TopEnd)
                             ) {
@@ -111,7 +114,13 @@ fun MovieDetailsScreen(
                                     text = uiState.wishlist.size.toString(),
                                     color = Color.White,
                                     fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        platformStyle = PlatformTextStyle(
+                                            includeFontPadding = false
+                                        )
+                                    )
                                 )
                             }
                         }
