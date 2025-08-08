@@ -1,7 +1,6 @@
 package com.mubin.presentation.ui.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -11,12 +10,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,68 +31,115 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mubin.presentation.ui.HomeViewModel
 import com.mubin.presentation.ui.util.NetworkHelper
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun SplashScreen(
     viewModel: HomeViewModel,
-    onNavigateToMovieList: () -> Unit
+    onNavigateToMovieList: () -> Unit,
+    onFinish: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var showNoInternetDialog by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
+    var showFirstLaunchDialog by remember { mutableStateOf(false) }
 
-    val isDarkTheme = isSystemInDarkTheme()
-    val backgroundColor = MaterialTheme.colorScheme.background
-    val contentColor = MaterialTheme.colorScheme.onBackground
-
-    // Handle navigation logic
-    LaunchedEffect(true) {
+    LaunchedEffect(Unit) {
         viewModel.checkIfFirstLaunch { isFirstLaunch ->
             if (isFirstLaunch) {
-                if (NetworkHelper(context).hasInternetConnection()) {
-                    onNavigateToMovieList()
-                } else {
-                    showNoInternetDialog = true
+                if (!NetworkHelper(context).hasInternetConnection()) {
+                    showFirstLaunchDialog = true
                 }
-            } else {
+            }
+        }
+    }
+
+    LaunchedEffect(uiState.isDataSynced) {
+        if (uiState.isDataSynced) {
+            scope.launch {
+                delay(1000) // pause for dramatic effect of splash screen
                 onNavigateToMovieList()
             }
         }
     }
 
-    // UI layout
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = "App Logo",
-                tint = contentColor,
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "MyIMDB",
-                color = contentColor,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            CircularProgressIndicator()
         }
 
-        if (showNoInternetDialog) {
+        if (showFirstLaunchDialog) {
             AlertDialog(
                 onDismissRequest = {},
+                title = { Text("No Internet") },
+                text = { Text("Internet connection is required on first launch.") },
                 confirmButton = {
-                    TextButton(onClick = { showNoInternetDialog = false }) {
-                        Text("OK")
+                    TextButton(onClick = {
+                        if (NetworkHelper(context).hasInternetConnection()) {
+                            showFirstLaunchDialog = false
+                            viewModel.syncInitialData()
+                        }
+                    }) {
+                        Text("Retry")
                     }
                 },
-                title = { Text("No Internet") },
-                text = { Text("Internet connection is required on first launch.") }
+                dismissButton = {
+                    TextButton(onClick = {
+                        showFirstLaunchDialog = false
+                        onFinish()
+                    }) {
+                        Text("Exit")
+                    }
+                }
+            )
+        }
+
+        uiState.error?.let { errorMsg ->
+            AlertDialog(
+                onDismissRequest = {},
+                title = { Text("Sync Failed") },
+                text = { Text(errorMsg) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.clearError()
+                        if (NetworkHelper(context).hasInternetConnection()) {
+                            viewModel.syncInitialData()
+                        } else {
+                            showFirstLaunchDialog = true
+                        }
+                    }) {
+                        Text("Retry")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        viewModel.clearError()
+                        onFinish()
+                    }) {
+                        Text("Exit")
+                    }
+                }
             )
         }
     }
