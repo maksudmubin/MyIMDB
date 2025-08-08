@@ -1,6 +1,7 @@
 package com.mubin.presentation.ui
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -8,14 +9,17 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.mubin.presentation.ui.screen.MovieDetailsScreen
 import com.mubin.presentation.ui.screen.MovieListScreen
 import com.mubin.presentation.ui.screen.SplashScreen
@@ -33,6 +37,11 @@ class HomeActivity : ComponentActivity() {
         setContent {
             val systemDarkTheme = isSystemInDarkTheme()
             var isDarkTheme by rememberSaveable { mutableStateOf(systemDarkTheme) }
+
+            LaunchedEffect(systemDarkTheme) {
+                isDarkTheme = systemDarkTheme
+            }
+
             MyIMDBTheme(
                 darkTheme = isDarkTheme
             ) {
@@ -41,7 +50,9 @@ class HomeActivity : ComponentActivity() {
                     navController = navController,
                     vm = vm,
                     isDarkTheme = isDarkTheme,
-                    onToggleTheme = { isDarkTheme = !isDarkTheme }
+                    onToggleTheme = {
+                        isDarkTheme = !isDarkTheme
+                    }
                 )
             }
         }
@@ -124,14 +135,23 @@ class HomeActivity : ComponentActivity() {
                     viewModel = vm,
                     onNavigateToWishlist = { navController.navigate("wishlist") },
                     onNavigateToDetails = { movie ->
-                        navController.navigate("details/${movie.id}")
+                        navController.navigate("details?id=${movie.id}&isFromWishlist=false")
                     },
                     isDarkTheme = isDarkTheme,
                     onToggleTheme = onToggleTheme
                 )
             }
             composable(
-                route = "details/{id}",
+                route = "details?id={id}&isFromWishlist={isFromWishlist}",
+                arguments = listOf(
+                    navArgument("id") {
+                        type = NavType.IntType
+                    },
+                    navArgument("isFromWishlist") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                ),
                 enterTransition = {
                     slideIntoContainer(
                         AnimatedContentTransitionScope.SlideDirection.Left,  // Should match enter of next screen
@@ -157,11 +177,19 @@ class HomeActivity : ComponentActivity() {
                     )
                 }
             ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getString("id") ?: return@composable
+                val id = backStackEntry.arguments?.getInt("id") ?: -1
+                val isFromWishlist = backStackEntry.arguments?.getBoolean("isFromWishlist") ?: false
+                Log.d("HomeActivity", "$id isFromWishlist: $isFromWishlist")
                 MovieDetailsScreen(
-                    id = id.toIntOrNull() ?: return@composable,
+                    id = id,
                     viewmodel = vm,
-                    onNavigateToWishlist = { navController.navigate("wishlist") },
+                    onNavigateToWishlist = {
+                        if (isFromWishlist) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate("wishlist")
+                        }
+                    },
                     onBackClick = { navController.popBackStack() }
                 )
             }
@@ -195,7 +223,7 @@ class HomeActivity : ComponentActivity() {
                 WishlistScreen(
                     viewmodel = vm,
                     onNavigateToDetails = { movieId ->
-                        navController.navigate("details/$movieId")
+                        navController.navigate("details?id=$movieId&isFromWishlist=true")
                     },
                     onBackClick = { navController.popBackStack() }
                 )
