@@ -42,9 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -263,11 +261,6 @@ fun MovieDetailsContent(
                             fontWeight = FontWeight.Bold,
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 1f
                             )
                         )
                     )
@@ -280,11 +273,6 @@ fun MovieDetailsContent(
                         style = TextStyle(
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 1f
                             )
                         )
                     )
@@ -298,11 +286,6 @@ fun MovieDetailsContent(
                             fontWeight = FontWeight.SemiBold,
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 1f
                             )
                         )
                     )
@@ -319,11 +302,6 @@ fun MovieDetailsContent(
                                             fontWeight = FontWeight.Normal,
                                             platformStyle = PlatformTextStyle(
                                                 includeFontPadding = false
-                                            ),
-                                            shadow = Shadow(
-                                                color = Color.Black.copy(alpha = 0.75f),
-                                                offset = Offset(1f, 1f),
-                                                blurRadius = 1f
                                             )
                                         )
                                     )
@@ -343,11 +321,6 @@ fun MovieDetailsContent(
                             fontWeight = FontWeight.Normal,
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 1f
                             )
                         )
                     )
@@ -361,11 +334,6 @@ fun MovieDetailsContent(
                             fontWeight = FontWeight.Normal,
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 1f
                             )
                         )
                     )
@@ -379,11 +347,6 @@ fun MovieDetailsContent(
                             fontWeight = FontWeight.SemiBold,
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 1f
                             )
                         )
                     )
@@ -395,11 +358,6 @@ fun MovieDetailsContent(
                             fontWeight = FontWeight.Normal,
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 1f
                             )
                         )
                     )

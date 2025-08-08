@@ -60,7 +60,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -561,17 +560,12 @@ fun MovieItem(
                 ) {
                     Text(
                         text = movie.title,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize =  with(density) { 16.sp / fontScale },
                         style = TextStyle(
                             fontWeight = FontWeight.Bold,
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(2f, 2f),
-                                blurRadius = 4f
                             )
                         ),
                         maxLines = 1,
@@ -583,16 +577,11 @@ fun MovieItem(
                     )
                     Text(
                         text = "📅 Year: ${movie.year}",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = with(density) { 14.sp / fontScale },
                         style = TextStyle(
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 2f
                             )
                         )
                     )
@@ -602,16 +591,11 @@ fun MovieItem(
                     )
                     Text(
                         text = "⏱️ Runtime: ${movie.runtime} mins",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = with(density) { 14.sp / fontScale },
                         style = TextStyle(
                             platformStyle = PlatformTextStyle(
                                 includeFontPadding = false
-                            ),
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.75f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 2f
                             )
                         ),
                     )
