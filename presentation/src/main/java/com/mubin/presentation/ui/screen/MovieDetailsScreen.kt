@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,9 +42,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -67,6 +68,7 @@ fun MovieDetailsScreen(
     onNavigateToWishlist: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    val density = LocalDensity.current
     val uiState by viewmodel.uiState.collectAsState()
     var movie by remember { mutableStateOf<Movie?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -84,6 +86,13 @@ fun MovieDetailsScreen(
                 title = {
                     Text(
                         text = movie?.title ?: "Movie Details",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = with(density) { 16.sp / fontScale },
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            )
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -181,7 +190,7 @@ fun MovieDetailsContent(
     isInWishlist: Boolean,
     onToggleWishlist: (Boolean) -> Unit,
 ) {
-    val imageWidth = LocalWindowInfo.current.containerSize.width * .4
+    val density = LocalDensity.current
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -208,6 +217,7 @@ fun MovieDetailsContent(
 
             Box(
                 modifier = Modifier
+                    .padding(horizontal = 40.dp)
                     .border(
                         border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
                         shape = RoundedCornerShape(24.dp)
@@ -216,12 +226,12 @@ fun MovieDetailsContent(
                 AsyncImage(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .width(imageWidth.dp)
+                        .fillMaxWidth()
                         .aspectRatio(2f / 3f)
                         .clip(RoundedCornerShape(24.dp)),
                     model = movie.posterUrl,
                     contentDescription = movie.title,
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.FillBounds,
                     placeholder = painterResource(R.drawable.loading_image_placeholder),
                     error = painterResource(R.drawable.no_image_placeholder)
                 )
@@ -247,33 +257,152 @@ fun MovieDetailsContent(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        movie.title,
-                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                        text = movie.title,
+                        fontSize = with(density) { 16.sp / fontScale},
+                        style = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(1f, 1f),
+                                blurRadius = 1f
+                            )
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("📅 Year: ${movie.year} | ⏱️ Runtime: ${movie.runtime} mins", style = MaterialTheme.typography.bodyMedium)
+
+                    Text(
+                        text = "📅 Year: ${movie.year} | ⏱️ Runtime: ${movie.runtime} mins",
+                        fontSize = with(density) {12.sp / fontScale},
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(1f, 1f),
+                                blurRadius = 1f
+                            )
+                        )
+                    )
+
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("🎭 Genres:", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "🎭 Genres:",
+                        fontSize = 14.sp,
+                        style = TextStyle(
+                            fontWeight = FontWeight.SemiBold,
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(1f, 1f),
+                                blurRadius = 1f
+                            )
+                        )
+                    )
+
                     FlowRow {
                         movie.genres.forEach {
                             AssistChip(
                                 onClick = {},
-                                label = { Text(it) },
+                                label = {
+                                    Text(
+                                        text = it,
+                                        fontSize = with(density) { 12.sp / fontScale },
+                                        style = TextStyle(
+                                            fontWeight = FontWeight.Normal,
+                                            platformStyle = PlatformTextStyle(
+                                                includeFontPadding = false
+                                            ),
+                                            shadow = Shadow(
+                                                color = Color.Black.copy(alpha = 0.75f),
+                                                offset = Offset(1f, 1f),
+                                                blurRadius = 1f
+                                            )
+                                        )
+                                    )
+                                },
                                 shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+                                modifier = Modifier.padding(end = 8.dp)
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("🎬 Director: ${movie.director}")
-                    Text("🎭 Cast: ${movie.actors}")
+
+                    Text(
+                        text = "🎬 Director: ${movie.director}",
+                        fontSize = 14.sp,
+                        style = TextStyle(
+                            fontWeight = FontWeight.Normal,
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(1f, 1f),
+                                blurRadius = 1f
+                            )
+                        )
+                    )
+
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("📖 Plot", style = MaterialTheme.typography.titleMedium)
-                    Text(movie.plot, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = "🎭 Cast: ${movie.actors}",
+                        fontSize = 14.sp,
+                        style = TextStyle(
+                            fontWeight = FontWeight.Normal,
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(1f, 1f),
+                                blurRadius = 1f
+                            )
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "📖 Plot",
+                        fontSize = 14.sp,
+                        style = TextStyle(
+                            fontWeight = FontWeight.SemiBold,
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(1f, 1f),
+                                blurRadius = 1f
+                            )
+                        )
+                    )
+
+                    Text(
+                        text = movie.plot,
+                        fontSize = with(density) { 12.sp / fontScale },
+                        style = TextStyle(
+                            fontWeight = FontWeight.Normal,
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(1f, 1f),
+                                blurRadius = 1f
+                            )
+                        )
+                    )
                 }
             }
 

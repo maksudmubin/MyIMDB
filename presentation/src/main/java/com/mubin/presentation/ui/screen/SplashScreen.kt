@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,6 +42,7 @@ fun SplashScreen(
     onNavigateToMovieList: () -> Unit,
     onFinish: () -> Unit
 ) {
+    val density = LocalDensity.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
@@ -78,13 +80,16 @@ fun SplashScreen(
                 tint = Color.Unspecified,
                 modifier = Modifier.size(150.dp)
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = "My IMDB",
                 color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 24.sp,
+                fontSize = with(density) {24.sp / fontScale},
                 fontWeight = FontWeight.Bold
             )
+
             Spacer(modifier = Modifier.height(16.dp))
 
             CircularProgressIndicator()

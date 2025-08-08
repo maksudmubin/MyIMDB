@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -61,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,6 +70,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -93,6 +94,7 @@ fun MovieListScreen(
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit
 ) {
+    val density = LocalDensity.current
     val uiState by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
     val listState = rememberLazyListState()
@@ -120,6 +122,26 @@ fun MovieListScreen(
             }
     }
 
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset }
+            .collect { (index, offset) ->
+                if (isGridView) {
+                    lastVisibleIndex = index
+                    lastVisibleOffset = offset
+                }
+            }
+    }
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .collect { (index, offset) ->
+                if (!isGridView) {
+                    lastVisibleIndex = index
+                    lastVisibleOffset = offset
+                }
+            }
+    }
+
     LaunchedEffect(isGridView) {
         if (isGridView) {
             gridState.scrollToItem(lastVisibleIndex, lastVisibleOffset)
@@ -131,7 +153,20 @@ fun MovieListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My IMDB", fontWeight = FontWeight.SemiBold, fontSize = 20.sp) },
+                title = {
+                    Text(
+                        text = "My IMDB",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = with(density) { 16.sp / fontScale },
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            )
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -179,6 +214,8 @@ fun MovieListScreen(
                             viewModel.onGenreSelected(genre.ifBlank { null })
                         }
                     )
+
+                    Spacer(modifier = Modifier.width(12.dp))
                 }
             )
         }
@@ -198,39 +235,22 @@ fun MovieListScreen(
             ) {
                 Row(
                     modifier = Modifier
-                        .height(48.dp) // match height
-                        .clip(RoundedCornerShape(8.dp)) // match radius
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(8.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onToggleTheme() }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .clickable { onToggleTheme() },
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_dark_mode),
-                        contentDescription = "Dark Mode",
                         modifier = Modifier.size(20.dp),
+                        painter = if (isDarkTheme)
+                            painterResource(R.drawable.ic_dark_mode)
+                        else
+                            painterResource(R.drawable.ic_light_mode),
+                        contentDescription = "Dark Mode",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier.height(IntrinsicSize.Min)
-                    ) {
-                        Text(
-                            text = "Dark Mode",
-                            fontSize = 12.sp,
-                            lineHeight = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = if (isDarkTheme) "ON" else "OFF",
-                            fontSize = 10.sp,
-                            lineHeight = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (isDarkTheme) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
 
                 CustomSearchBar(
@@ -243,22 +263,14 @@ fun MovieListScreen(
 
                 Row(
                     modifier = Modifier
-                        .height(48.dp)
+                        .size(48.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable {
-                            if (isGridView) {
-                                lastVisibleIndex = gridState.firstVisibleItemIndex
-                                lastVisibleOffset = gridState.firstVisibleItemScrollOffset
-                            } else {
-                                lastVisibleIndex = listState.firstVisibleItemIndex
-                                lastVisibleOffset = listState.firstVisibleItemScrollOffset
-                            }
                             isGridView = !isGridView
-                        }
-                        .padding(horizontal = 12.dp),
+                        },
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
                         painter = painterResource(if (isGridView) R.drawable.ic_list else R.drawable.ic_grid),
@@ -266,25 +278,6 @@ fun MovieListScreen(
                         modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier.height(IntrinsicSize.Min)
-                    ) {
-                        Text(
-                            text = "View Mode",
-                            fontSize = 12.sp,
-                            lineHeight = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = if (isGridView) "Grid" else "List",
-                            fontSize = 10.sp,
-                            lineHeight = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
                 }
             }
 
@@ -304,7 +297,7 @@ fun MovieListScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(uiState.movieList) { movie ->
+                    items(uiState.movieList, key = { it.id }) { movie ->
                         MovieGridItem(
                             movie = movie,
                             onClick = { onNavigateToDetails(movie) },
@@ -342,7 +335,7 @@ fun MovieListScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(uiState.movieList) { movie ->
+                    items(uiState.movieList, key = { it.id }) { movie ->
                         MovieItem(
                             movie = movie,
                             onClick = { onNavigateToDetails(movie) },
@@ -378,6 +371,7 @@ fun DropdownMenuGenreFilter(
     genres: List<String>,
     onGenreSelected: (String) -> Unit
 ) {
+    val density = LocalDensity.current
     var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
@@ -389,16 +383,31 @@ fun DropdownMenuGenreFilter(
         OutlinedTextField(
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryEditable, true)
-                .widthIn(min = 120.dp)
-                .height(56.dp), // match search bar height
+                .widthIn(min = 120.dp),
             value = selectedGenre.ifBlank { "All Genres" },
             onValueChange = {},
             readOnly = true,
-            label = { Text("Genre") },
+            singleLine = true,
+            maxLines = 1,
+            label = {
+                Text(
+                    text = "Genre",
+                    fontSize = with(density) { 10.sp / fontScale },
+                    style = TextStyle(
+                        platformStyle = PlatformTextStyle(
+                            includeFontPadding = false
+                        )
+                    )
+                )
+            },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
-            shape = RoundedCornerShape(8.dp), // match search bar corner
+            shape = RoundedCornerShape(8.dp),
+            textStyle = TextStyle(
+                fontSize = with(density) { 14.sp / fontScale },
+                platformStyle = PlatformTextStyle(includeFontPadding = false)
+            ),
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -407,8 +416,7 @@ fun DropdownMenuGenreFilter(
                 unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 focusedLabelColor = MaterialTheme.colorScheme.primary,
                 disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-            ),
-            textStyle = MaterialTheme.typography.bodyLarge
+            )
         )
 
         ExposedDropdownMenu(
@@ -416,7 +424,17 @@ fun DropdownMenuGenreFilter(
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = { Text("All Genres") },
+                text = {
+                    Text(
+                        text = "All Genres",
+                        fontSize = with(density) { 14.sp / fontScale },
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            )
+                        )
+                    )
+                },
                 onClick = {
                     expanded = false
                     onGenreSelected("")
@@ -424,7 +442,17 @@ fun DropdownMenuGenreFilter(
             )
             genres.forEach { genre ->
                 DropdownMenuItem(
-                    text = { Text(genre) },
+                    text = {
+                        Text(
+                            text = genre,
+                            fontSize = with(density) { 14.sp / fontScale },
+                            style = TextStyle(
+                                platformStyle = PlatformTextStyle(
+                                    includeFontPadding = false
+                                )
+                            )
+                        )
+                    },
                     onClick = {
                         expanded = false
                         onGenreSelected(genre)
@@ -441,13 +469,21 @@ fun CustomSearchBar(
     query: String,
     onQueryChange: (String) -> Unit
 ) {
+    val density = LocalDensity.current
     OutlinedTextField(
+        modifier = modifier
+            .fillMaxWidth(),
         value = query,
         onValueChange = onQueryChange,
         placeholder = {
             Text(
                 text = "Search movies...",
-                style = MaterialTheme.typography.bodyLarge,
+                style = TextStyle(
+                    fontSize = with(density) { 14.sp / fontScale },
+                    platformStyle = PlatformTextStyle(
+                        includeFontPadding = false
+                    )
+                ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -459,11 +495,13 @@ fun CustomSearchBar(
                 contentDescription = null
             )
         },
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp),
         shape = RoundedCornerShape(8.dp),
-        textStyle = MaterialTheme.typography.bodyLarge,
+        textStyle = TextStyle(
+            fontSize = with(density) { 14.sp / fontScale },
+            platformStyle = PlatformTextStyle(
+                includeFontPadding = false
+            )
+        ),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -486,6 +524,7 @@ fun MovieItem(
     isInWishlist: Boolean,
     onToggleWishlist: (Boolean) -> Unit
 ) {
+    val density = LocalDensity.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -522,10 +561,18 @@ fun MovieItem(
                 ) {
                     Text(
                         text = movie.title,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 20.sp,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold
+                        color = Color.White,
+                        fontSize =  with(density) { 16.sp / fontScale },
+                        style = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(2f, 2f),
+                                blurRadius = 4f
+                            )
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -536,9 +583,18 @@ fun MovieItem(
                     )
                     Text(
                         text = "📅 Year: ${movie.year}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 16.sp,
-                        style = MaterialTheme.typography.bodyMedium
+                        color = Color.White,
+                        fontSize = with(density) { 14.sp / fontScale },
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(1f, 1f),
+                                blurRadius = 2f
+                            )
+                        )
                     )
                     Spacer(
                         modifier = Modifier
@@ -546,9 +602,18 @@ fun MovieItem(
                     )
                     Text(
                         text = "⏱️ Runtime: ${movie.runtime} mins",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 16.sp,
-                        style = MaterialTheme.typography.bodyMedium
+                        color = Color.White,
+                        fontSize = with(density) { 14.sp / fontScale },
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(1f, 1f),
+                                blurRadius = 2f
+                            )
+                        ),
                     )
                 }
             }
@@ -572,6 +637,7 @@ fun MovieGridItem(
     isInWishlist: Boolean,
     onToggleWishlist: (Boolean) -> Unit
 ) {
+    val density = LocalDensity.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -622,9 +688,12 @@ fun MovieGridItem(
                 Text(
                     text = movie.title,
                     color = Color.White,
-                    fontSize = 16.sp,
-                    style = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = with(density) { 14.sp / fontScale },
+                    style = TextStyle(
                         fontWeight = FontWeight.Bold,
+                        platformStyle = PlatformTextStyle(
+                            includeFontPadding = false
+                        ),
                         shadow = Shadow(
                             color = Color.Black.copy(alpha = 0.75f),
                             offset = Offset(2f, 2f),
@@ -641,8 +710,11 @@ fun MovieGridItem(
                 Text(
                     text = "📅 Year: ${movie.year}",
                     color = Color.White,
-                    fontSize = 14.sp,
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = with(density) { 12.sp / fontScale },
+                    style = TextStyle(
+                        platformStyle = PlatformTextStyle(
+                            includeFontPadding = false
+                        ),
                         shadow = Shadow(
                             color = Color.Black.copy(alpha = 0.75f),
                             offset = Offset(1f, 1f),
@@ -657,8 +729,11 @@ fun MovieGridItem(
                 Text(
                     text = "⏱️ Runtime: ${movie.runtime} mins",
                     color = Color.White,
-                    fontSize = 14.sp,
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = with(density) { 12.sp / fontScale },
+                    style = TextStyle(
+                        platformStyle = PlatformTextStyle(
+                            includeFontPadding = false
+                        ),
                         shadow = Shadow(
                             color = Color.Black.copy(alpha = 0.75f),
                             offset = Offset(1f, 1f),

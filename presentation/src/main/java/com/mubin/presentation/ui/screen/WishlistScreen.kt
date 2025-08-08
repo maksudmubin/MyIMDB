@@ -44,7 +44,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -61,6 +64,7 @@ fun WishlistScreen(
     onNavigateToDetails: (Int) -> Unit,
     onBackClick: () -> Unit
 ) {
+    val density = LocalDensity.current
     val uiState by viewmodel.uiState.collectAsState()
 
     Scaffold(
@@ -69,6 +73,13 @@ fun WishlistScreen(
                 title = {
                     Text(
                         text = "Wishlist",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = with(density) { 16.sp / fontScale },
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            )
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -172,6 +183,7 @@ fun WishlistItem(
     isInWishlist: Boolean,
     onToggleWishlist: (Boolean) -> Unit
 ) {
+    val density = LocalDensity.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -209,9 +221,12 @@ fun WishlistItem(
                     Text(
                         text = movie.title,
                         color = Color.White,
-                        fontSize = 20.sp,
-                        style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize =  with(density) { 16.sp / fontScale },
+                        style = TextStyle(
                             fontWeight = FontWeight.Bold,
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
                             shadow = Shadow(
                                 color = Color.Black.copy(alpha = 0.75f),
                                 offset = Offset(2f, 2f),
@@ -228,8 +243,11 @@ fun WishlistItem(
                     Text(
                         text = "📅 Year: ${movie.year}",
                         color = Color.White,
-                        fontSize = 16.sp,
-                        style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = with(density) { 14.sp / fontScale },
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
                             shadow = Shadow(
                                 color = Color.Black.copy(alpha = 0.75f),
                                 offset = Offset(1f, 1f),
@@ -244,8 +262,11 @@ fun WishlistItem(
                     Text(
                         text = "⏱️ Runtime: ${movie.runtime} mins",
                         color = Color.White,
-                        fontSize = 16.sp,
-                        style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = with(density) { 14.sp / fontScale },
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(
+                                includeFontPadding = false
+                            ),
                             shadow = Shadow(
                                 color = Color.Black.copy(alpha = 0.75f),
                                 offset = Offset(1f, 1f),
