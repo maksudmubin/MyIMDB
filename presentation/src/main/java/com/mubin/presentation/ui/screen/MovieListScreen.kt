@@ -131,7 +131,7 @@ fun MovieListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("MyIMDB", fontWeight = FontWeight.SemiBold, fontSize = 20.sp) },
+                title = { Text("My IMDB", fontWeight = FontWeight.SemiBold, fontSize = 20.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
