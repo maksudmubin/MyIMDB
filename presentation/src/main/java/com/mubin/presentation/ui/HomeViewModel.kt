@@ -47,16 +47,17 @@ class HomeViewModel @Inject constructor(
         syncInitialData()
     }
 
-    private fun syncInitialData() {
+    fun syncInitialData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
 
             when (val result = syncMoviesIfNeeded()) {
                 is NetworkResult.Success -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            isDataSynced = true
+                            isDataSynced = true,
+                            error = null
                         )
                     }
                     loadGenres()
@@ -68,7 +69,7 @@ class HomeViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = result.message
+                            error = result.message,
                         )
                     }
                 }
@@ -168,5 +169,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             onResult(getMovieById(id))
         }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
     }
 }
