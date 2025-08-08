@@ -23,6 +23,6 @@ rootProject.name = "MyIMDB"
 include(":app")
 include(":presentation")
 include(":domain")
-include(":core:data")
+include(":data")
 include(":core:network")
 include(":core:database")
