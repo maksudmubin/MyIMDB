@@ -39,14 +39,16 @@ android {
 }
 
 dependencies {
-    implementation(project(":domain"))
     implementation(project(":core:network"))
     implementation(project(":core:database"))
-    implementation(project(":core:common"))
+    implementation(project(":domain"))
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.datastore.preferences)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
