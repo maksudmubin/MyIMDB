@@ -1,7 +1,7 @@
 package com.mubin.domain.repo
 
-import com.mubin.network.model.Movie
-import com.mubin.network.util.NetworkResult
+import com.mubin.common.utils.network.NetworkResult
+import com.mubin.domain.model.Movie
 
 interface MovieRepository {
 
