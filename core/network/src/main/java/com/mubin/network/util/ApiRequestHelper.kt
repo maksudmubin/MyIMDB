@@ -1,5 +1,6 @@
 package com.mubin.network.util
 
+import com.mubin.common.utils.network.NetworkResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
