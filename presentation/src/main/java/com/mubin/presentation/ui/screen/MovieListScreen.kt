@@ -79,11 +79,28 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.domain.model.Movie
 import com.mubin.presentation.R
 import com.mubin.presentation.ui.HomeViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 
+/**
+ * Displays the main movie list screen with support for:
+ * - Toggleable grid or list view for movies
+ * - Infinite pagination loading on scroll
+ * - Search by query
+ * - Filter by genre
+ * - Wishlist management with animated toggles
+ * - Theme toggle button
+ * - Navigation to movie details and wishlist
+ *
+ * @param viewModel The [HomeViewModel] providing UI state and actions
+ * @param onNavigateToWishlist Callback when wishlist icon is clicked
+ * @param onNavigateToDetails Callback when a movie item is clicked, passes selected [Movie]
+ * @param isDarkTheme Current theme mode flag
+ * @param onToggleTheme Callback to toggle between light and dark themes
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieListScreen(
@@ -101,47 +118,62 @@ fun MovieListScreen(
     var lastVisibleIndex by rememberSaveable { mutableIntStateOf(0) }
     var lastVisibleOffset by rememberSaveable { mutableIntStateOf(0) }
 
+    // Log initial states
+    MyImdbLogger.d("MovieListScreen", "Init isGridView=$isGridView")
+
+    // Observe grid scroll and trigger loading more movies near the end
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .distinctUntilChanged()
             .collect { index ->
+                MyImdbLogger.d("MovieListScreen", "Grid last visible index: $index")
                 if (index != null && index >= uiState.movieList.size - 1) {
+                    MyImdbLogger.d("MovieListScreen", "Loading next movies in grid")
                     viewModel.loadNextMovies()
                 }
             }
     }
 
+    // Observe list scroll and trigger loading more movies near the end
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .distinctUntilChanged()
             .collect { index ->
+                MyImdbLogger.d("MovieListScreen", "List last visible index: $index")
                 if (index != null && index >= uiState.movieList.size - 1) {
+                    MyImdbLogger.d("MovieListScreen", "Loading next movies in list")
                     viewModel.loadNextMovies()
                 }
             }
     }
 
+    // Track first visible item and offset for grid to restore scroll position on toggle
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
                 if (isGridView) {
+                    MyImdbLogger.d("MovieListScreen", "Saving grid scroll position index=$index offset=$offset")
                     lastVisibleIndex = index
                     lastVisibleOffset = offset
                 }
             }
     }
 
+    // Track first visible item and offset for list to restore scroll position on toggle
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
                 if (!isGridView) {
+                    MyImdbLogger.d("MovieListScreen", "Saving list scroll position index=$index offset=$offset")
                     lastVisibleIndex = index
                     lastVisibleOffset = offset
                 }
             }
     }
 
+    // Restore scroll position when toggling between grid and list views
     LaunchedEffect(isGridView) {
+        MyImdbLogger.d("MovieListScreen", "Toggling view to ${if (isGridView) "Grid" else "List"} and restoring scroll position")
         if (isGridView) {
             gridState.scrollToItem(lastVisibleIndex, lastVisibleOffset)
         } else {
@@ -149,6 +181,7 @@ fun MovieListScreen(
         }
     }
 
+    // Main scaffold holding the top app bar and body content
     Scaffold(
         topBar = {
             TopAppBar(
@@ -172,6 +205,7 @@ fun MovieListScreen(
                     actionIconContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 actions = {
+                    // Wishlist icon with badge count if wishlist is not empty
                     Box(
                         modifier = Modifier
                             .padding(end = 8.dp)
@@ -206,10 +240,12 @@ fun MovieListScreen(
 
                     Spacer(modifier = Modifier.width(4.dp))
 
+                    // Genre dropdown filter
                     DropdownMenuGenreFilter(
                         selectedGenre = uiState.selectedGenre.orEmpty(),
                         genres = uiState.genres,
                         onGenreSelected = { genre ->
+                            MyImdbLogger.d("MovieListScreen", "Genre selected: $genre")
                             viewModel.onGenreSelected(genre.ifBlank { null })
                         }
                     )
@@ -220,11 +256,13 @@ fun MovieListScreen(
         }
     ) { innerPadding ->
 
+        // Main column holding search, toggle buttons, and movie list/grid
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Top controls: theme toggle, search bar, view toggle
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -232,12 +270,16 @@ fun MovieListScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Theme toggle button
                 Row(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onToggleTheme() },
+                        .clickable {
+                            MyImdbLogger.d("MovieListScreen", "Theme toggle clicked")
+                            onToggleTheme()
+                        },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
@@ -252,14 +294,19 @@ fun MovieListScreen(
                     )
                 }
 
+                // Search bar input
                 CustomSearchBar(
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp),
                     query = uiState.searchQuery,
-                    onQueryChange = viewModel::onSearchQueryChanged
+                    onQueryChange = {
+                        MyImdbLogger.d("MovieListScreen", "Search query changed: $it")
+                        viewModel.onSearchQueryChanged(it)
+                    }
                 )
 
+                // View toggle button (Grid/List)
                 Row(
                     modifier = Modifier
                         .size(48.dp)
@@ -267,6 +314,7 @@ fun MovieListScreen(
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable {
                             isGridView = !isGridView
+                            MyImdbLogger.d("MovieListScreen", "View toggled. isGridView=$isGridView")
                         },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
@@ -280,6 +328,7 @@ fun MovieListScreen(
                 }
             }
 
+            // Show either grid or list of movies depending on isGridView state
             if (isGridView) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
@@ -296,17 +345,23 @@ fun MovieListScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // Movie items in grid
                     items(uiState.movieList, key = { it.id }) { movie ->
                         MovieGridItem(
                             movie = movie,
-                            onClick = { onNavigateToDetails(movie) },
+                            onClick = {
+                                MyImdbLogger.d("MovieListScreen", "Grid movie clicked: ${movie.title}")
+                                onNavigateToDetails(movie)
+                            },
                             isInWishlist = uiState.wishlist.any { it.id == movie.id },
                             onToggleWishlist = { status ->
+                                MyImdbLogger.d("MovieListScreen", "Grid wishlist toggle: ${movie.title}, status=$status")
                                 viewModel.onWishlistToggle(movie.id, status)
                             }
                         )
                     }
 
+                    // Show loading indicator as a full span item when loading
                     if (uiState.isLoading) {
                         item(span = { GridItemSpan(2) }) {
                             Box(
@@ -334,17 +389,23 @@ fun MovieListScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // Movie items in list
                     items(uiState.movieList, key = { it.id }) { movie ->
                         MovieItem(
                             movie = movie,
-                            onClick = { onNavigateToDetails(movie) },
+                            onClick = {
+                                MyImdbLogger.d("MovieListScreen", "List movie clicked: ${movie.title}")
+                                onNavigateToDetails(movie)
+                            },
                             isInWishlist = uiState.wishlist.any { it.id == movie.id },
                             onToggleWishlist = { status ->
+                                MyImdbLogger.d("MovieListScreen", "List wishlist toggle: ${movie.title}, status=$status")
                                 viewModel.onWishlistToggle(movie.id, status)
                             }
                         )
                     }
 
+                    // Show loading indicator at bottom when loading
                     if (uiState.isLoading) {
                         item {
                             Box(
@@ -364,6 +425,16 @@ fun MovieListScreen(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Dropdown menu composable to select a movie genre filter.
+ *
+ * Displays an outlined text field that opens a dropdown menu with all available genres
+ * plus an "All Genres" option. Selecting a genre triggers the [onGenreSelected] callback.
+ *
+ * @param selectedGenre The currently selected genre. Empty string indicates "All Genres".
+ * @param genres List of available genre strings.
+ * @param onGenreSelected Callback invoked with the genre selected by the user.
+ */
 @Composable
 fun DropdownMenuGenreFilter(
     selectedGenre: String,
@@ -435,6 +506,7 @@ fun DropdownMenuGenreFilter(
                     )
                 },
                 onClick = {
+                    MyImdbLogger.d("DropdownMenuGenreFilter", "Selected genre: All Genres")
                     expanded = false
                     onGenreSelected("")
                 }
@@ -453,6 +525,7 @@ fun DropdownMenuGenreFilter(
                         )
                     },
                     onClick = {
+                        MyImdbLogger.d("DropdownMenuGenreFilter", "Selected genre: $genre")
                         expanded = false
                         onGenreSelected(genre)
                     }
@@ -462,6 +535,16 @@ fun DropdownMenuGenreFilter(
     }
 }
 
+/**
+ * Custom search bar composable for searching movies.
+ *
+ * Displays an outlined text field with a search icon, placeholder, and
+ * custom styling matching the app theme.
+ *
+ * @param modifier Modifier to be applied to the search bar container.
+ * @param query Current search query text.
+ * @param onQueryChange Lambda to be invoked when the query text changes.
+ */
 @Composable
 fun CustomSearchBar(
     modifier: Modifier = Modifier,
@@ -469,11 +552,15 @@ fun CustomSearchBar(
     onQueryChange: (String) -> Unit
 ) {
     val density = LocalDensity.current
+
     OutlinedTextField(
         modifier = modifier
             .fillMaxWidth(),
         value = query,
-        onValueChange = onQueryChange,
+        onValueChange = { newQuery ->
+            MyImdbLogger.d("CustomSearchBar", "Search query changed to: $newQuery")
+            onQueryChange(newQuery)
+        },
         placeholder = {
             Text(
                 text = "Search movies...",
@@ -491,7 +578,7 @@ fun CustomSearchBar(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = null
+                contentDescription = "Search Icon"
             )
         },
         shape = RoundedCornerShape(8.dp),
@@ -516,6 +603,16 @@ fun CustomSearchBar(
 }
 
 
+/**
+ * Composable representing a single movie item card.
+ *
+ * Displays movie poster, title, year, runtime and a wishlist toggle button.
+ *
+ * @param movie The [Movie] data to display.
+ * @param onClick Callback invoked when the card is clicked.
+ * @param isInWishlist Whether the movie is currently in the wishlist.
+ * @param onToggleWishlist Callback invoked when wishlist toggle is clicked with new status.
+ */
 @Composable
 fun MovieItem(
     movie: Movie,
@@ -524,11 +621,15 @@ fun MovieItem(
     onToggleWishlist: (Boolean) -> Unit
 ) {
     val density = LocalDensity.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable { onClick() },
+            .clickable {
+                MyImdbLogger.d("MovieItem", "Clicked movie: ${movie.title} (ID: ${movie.id})")
+                onClick()
+            },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -561,51 +662,38 @@ fun MovieItem(
                     Text(
                         text = movie.title,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize =  with(density) { 16.sp / fontScale },
+                        fontSize = with(density) { 16.sp / fontScale },
                         style = TextStyle(
                             fontWeight = FontWeight.Bold,
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(
-                        modifier = Modifier
-                            .size(8.dp)
-                    )
+                    Spacer(modifier = Modifier.size(8.dp))
                     Text(
                         text = "📅 Year: ${movie.year}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = with(density) { 14.sp / fontScale },
-                        style = TextStyle(
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
-                        )
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
                     )
-                    Spacer(
-                        modifier = Modifier
-                            .size(8.dp)
-                    )
+                    Spacer(modifier = Modifier.size(8.dp))
                     Text(
                         text = "⏱️ Runtime: ${movie.runtime} mins",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = with(density) { 14.sp / fontScale },
-                        style = TextStyle(
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
-                        ),
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false)),
                     )
                 }
             }
 
-            // Wishlist button at top-right corner
+            // Wishlist toggle button at top-right corner with animation
             AnimatedWishlistButton(
                 isInWishlist = isInWishlist,
-                onToggle = onToggleWishlist,
+                onToggle = {
+                    MyImdbLogger.d("MovieItem", "Wishlist toggled for movie ${movie.id}: $it")
+                    onToggleWishlist(it)
+                },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(10.dp)
@@ -614,6 +702,17 @@ fun MovieItem(
     }
 }
 
+/**
+ * Composable representing a movie item in grid layout.
+ *
+ * Displays movie poster with a gradient overlay at the bottom containing
+ * title, year, and runtime. Shows an animated wishlist toggle at top-right.
+ *
+ * @param movie The [Movie] to display.
+ * @param onClick Callback invoked when the card is clicked.
+ * @param isInWishlist Whether the movie is currently in the wishlist.
+ * @param onToggleWishlist Callback invoked with new wishlist status when toggled.
+ */
 @Composable
 fun MovieGridItem(
     movie: Movie,
@@ -622,11 +721,15 @@ fun MovieGridItem(
     onToggleWishlist: (Boolean) -> Unit
 ) {
     val density = LocalDensity.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(2f / 3f)
-            .clickable { onClick() },
+            .clickable {
+                MyImdbLogger.d("MovieGridItem", "Clicked movie: ${movie.title} (ID: ${movie.id})")
+                onClick()
+            },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -634,6 +737,7 @@ fun MovieGridItem(
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            // Poster image fills entire card area
             AsyncImage(
                 model = movie.posterUrl,
                 contentDescription = movie.title,
@@ -643,16 +747,19 @@ fun MovieGridItem(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Wishlist icon top-right
+            // Wishlist toggle button at top-right corner with animation
             AnimatedWishlistButton(
                 isInWishlist = isInWishlist,
-                onToggle = onToggleWishlist,
+                onToggle = {
+                    MyImdbLogger.d("MovieGridItem", "Wishlist toggled for movie ${movie.id}: $it")
+                    onToggleWishlist(it)
+                },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(10.dp)
             )
 
-            // Bottom info with gradient
+            // Bottom gradient overlay with movie info text
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -661,7 +768,7 @@ fun MovieGridItem(
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color(0xCC000000)
+                                Color(0xCC000000) // Semi-transparent black gradient
                             )
                         )
                     )
@@ -675,9 +782,7 @@ fun MovieGridItem(
                     fontSize = with(density) { 14.sp / fontScale },
                     style = TextStyle(
                         fontWeight = FontWeight.Bold,
-                        platformStyle = PlatformTextStyle(
-                            includeFontPadding = false
-                        ),
+                        platformStyle = PlatformTextStyle(includeFontPadding = false),
                         shadow = Shadow(
                             color = Color.Black.copy(alpha = 0.75f),
                             offset = Offset(2f, 2f),
@@ -687,18 +792,13 @@ fun MovieGridItem(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(
-                    modifier = Modifier
-                        .size(4.dp)
-                )
+                Spacer(modifier = Modifier.size(4.dp))
                 Text(
                     text = "📅 Year: ${movie.year}",
                     color = Color.White,
                     fontSize = with(density) { 12.sp / fontScale },
                     style = TextStyle(
-                        platformStyle = PlatformTextStyle(
-                            includeFontPadding = false
-                        ),
+                        platformStyle = PlatformTextStyle(includeFontPadding = false),
                         shadow = Shadow(
                             color = Color.Black.copy(alpha = 0.75f),
                             offset = Offset(1f, 1f),
@@ -706,18 +806,13 @@ fun MovieGridItem(
                         )
                     )
                 )
-                Spacer(
-                    modifier = Modifier
-                        .size(4.dp)
-                )
+                Spacer(modifier = Modifier.size(4.dp))
                 Text(
                     text = "⏱️ Runtime: ${movie.runtime} mins",
                     color = Color.White,
                     fontSize = with(density) { 12.sp / fontScale },
                     style = TextStyle(
-                        platformStyle = PlatformTextStyle(
-                            includeFontPadding = false
-                        ),
+                        platformStyle = PlatformTextStyle(includeFontPadding = false),
                         shadow = Shadow(
                             color = Color.Black.copy(alpha = 0.75f),
                             offset = Offset(1f, 1f),
@@ -730,12 +825,23 @@ fun MovieGridItem(
     }
 }
 
+/**
+ * Animated wishlist button with a rotating heart icon.
+ *
+ * Shows a filled heart if [isInWishlist] is true, otherwise an outlined heart.
+ * Clicking toggles the wishlist status with a smooth rotation animation.
+ *
+ * @param isInWishlist Current wishlist status.
+ * @param onToggle Callback invoked with the new wishlist status on click.
+ * @param modifier Modifier to apply to the root Box.
+ */
 @Composable
 fun AnimatedWishlistButton(
     isInWishlist: Boolean,
     onToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Animate rotation: 0° when in wishlist, -360° when removed for full spin effect
     val rotation by animateFloatAsState(
         targetValue = if (isInWishlist) 0f else -360f,
         animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
@@ -750,7 +856,11 @@ fun AnimatedWishlistButton(
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
                 shape = CircleShape
             )
-            .clickable { onToggle(!isInWishlist) },
+            .clickable {
+                val newStatus = !isInWishlist
+                MyImdbLogger.d("AnimatedWishlistButton", "Wishlist toggled: $newStatus")
+                onToggle(newStatus)
+            },
         contentAlignment = Alignment.Center
     ) {
         Icon(

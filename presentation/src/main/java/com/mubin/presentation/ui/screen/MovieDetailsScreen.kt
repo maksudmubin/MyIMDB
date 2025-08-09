@@ -54,10 +54,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.domain.model.Movie
 import com.mubin.presentation.R
 import com.mubin.presentation.ui.HomeViewModel
 
+/**
+ * Screen composable showing detailed information about a movie identified by [id].
+ *
+ * Fetches the movie asynchronously from the [viewmodel], shows a loading indicator while fetching,
+ * displays an error message if movie is not found, or shows [MovieDetailsContent] on success.
+ *
+ * Also provides a top app bar with back navigation and wishlist navigation buttons.
+ *
+ * @param id The ID of the movie to display
+ * @param viewmodel The [HomeViewModel] providing UI state and movie fetching
+ * @param onNavigateToWishlist Callback invoked when wishlist icon in the app bar is clicked
+ * @param onBackClick Callback invoked when back navigation icon is clicked
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieDetailsScreen(
@@ -71,10 +85,12 @@ fun MovieDetailsScreen(
     var movie by remember { mutableStateOf<Movie?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
+    // Load movie by id asynchronously on first composition and when id changes
     LaunchedEffect(id) {
         viewmodel.getMovieById(id) { movieData ->
             movie = movieData
             isLoading = false
+            MyImdbLogger.d("MovieDetailsScreen", "Loaded movie with id $id: $movieData")
         }
     }
 
@@ -96,7 +112,10 @@ fun MovieDetailsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        MyImdbLogger.d("MovieDetailsScreen", "Back button clicked")
+                        onBackClick()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -105,7 +124,10 @@ fun MovieDetailsScreen(
                         modifier = Modifier
                             .padding(end = 16.dp)
                     ) {
-                        IconButton(onClick = onNavigateToWishlist) {
+                        IconButton(onClick = {
+                            MyImdbLogger.d("MovieDetailsScreen", "Navigate to Wishlist clicked")
+                            onNavigateToWishlist()
+                        }) {
                             Icon(Icons.Default.Favorite, contentDescription = "Wishlist")
                         }
                         if (uiState.wishlist.isNotEmpty()) {
@@ -143,6 +165,7 @@ fun MovieDetailsScreen(
     ) { innerPadding ->
         when {
             isLoading -> {
+                // Show loading spinner while fetching movie data
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -154,6 +177,7 @@ fun MovieDetailsScreen(
             }
 
             movie == null -> {
+                // Show error text if movie not found
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -165,11 +189,13 @@ fun MovieDetailsScreen(
             }
 
             else -> {
+                // Show movie details content with wishlist toggle
                 MovieDetailsContent(
                     movie = movie!!,
                     isInWishlist = uiState.wishlist.any { it.id == movie?.id },
                     onToggleWishlist = { status ->
                         movie?.let {
+                            MyImdbLogger.d("MovieDetailsScreen", "Wishlist toggle for movie id ${it.id}: $status")
                             viewmodel.onWishlistToggle(it.id, status)
                         }
                     },
@@ -178,9 +204,21 @@ fun MovieDetailsScreen(
             }
         }
     }
-
 }
 
+
+/**
+ * Composable displaying detailed information about a movie.
+ *
+ * Shows a blurred background poster, a focused poster image with wishlist toggle,
+ * and detailed movie info such as title, year, runtime, genres, director, cast, and plot.
+ *
+ * @param modifier Optional [Modifier] for styling and layout
+ * @param movie The [Movie] data to display
+ * @param isInWishlist Whether the movie is currently in the wishlist
+ * @param onToggleWishlist Callback invoked when wishlist toggle button is pressed,
+ *                         with the new wishlist status (true if added, false if removed)
+ */
 @Composable
 fun MovieDetailsContent(
     modifier: Modifier = Modifier,
@@ -194,6 +232,7 @@ fun MovieDetailsContent(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        // Blurred full-screen background image of the movie poster
         AsyncImage(
             modifier = Modifier
                 .fillMaxSize()
@@ -205,6 +244,7 @@ fun MovieDetailsContent(
             error = painterResource(R.drawable.no_image_placeholder)
         )
 
+        // Scrollable column with main content
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -213,6 +253,7 @@ fun MovieDetailsContent(
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Poster with border and wishlist toggle button overlay
             Box(
                 modifier = Modifier
                     .padding(horizontal = 40.dp)
@@ -234,6 +275,7 @@ fun MovieDetailsContent(
                     error = painterResource(R.drawable.no_image_placeholder)
                 )
 
+                // Animated wishlist toggle button aligned top-end with padding
                 AnimatedWishlistButton(
                     isInWishlist = isInWishlist,
                     onToggle = onToggleWishlist,
@@ -245,6 +287,8 @@ fun MovieDetailsContent(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // Surface container for textual movie details with some transparency and elevation
             Surface(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
@@ -254,42 +298,40 @@ fun MovieDetailsContent(
                 tonalElevation = 4.dp
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
+                    // Movie title, bold and scaled
                     Text(
                         text = movie.title,
-                        fontSize = with(density) { 16.sp / fontScale},
+                        fontSize = with(density) { 16.sp / fontScale },
                         style = TextStyle(
                             fontWeight = FontWeight.Bold,
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // Year and runtime information
                     Text(
                         text = "📅 Year: ${movie.year} | ⏱️ Runtime: ${movie.runtime} mins",
-                        fontSize = with(density) {12.sp / fontScale},
+                        fontSize = with(density) { 12.sp / fontScale },
                         style = TextStyle(
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // Genres label
                     Text(
                         text = "🎭 Genres:",
                         fontSize = 14.sp,
                         style = TextStyle(
                             fontWeight = FontWeight.SemiBold,
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
                     )
 
+                    // Genres displayed as chips in a FlowRow
                     FlowRow {
                         movie.genres.forEach {
                             AssistChip(
@@ -300,9 +342,7 @@ fun MovieDetailsContent(
                                         fontSize = with(density) { 12.sp / fontScale },
                                         style = TextStyle(
                                             fontWeight = FontWeight.Normal,
-                                            platformStyle = PlatformTextStyle(
-                                                includeFontPadding = false
-                                            )
+                                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                                         )
                                     )
                                 },
@@ -314,51 +354,47 @@ fun MovieDetailsContent(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // Director
                     Text(
                         text = "🎬 Director: ${movie.director}",
                         fontSize = 14.sp,
                         style = TextStyle(
                             fontWeight = FontWeight.Normal,
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // Cast
                     Text(
                         text = "🎭 Cast: ${movie.actors}",
                         fontSize = 14.sp,
                         style = TextStyle(
                             fontWeight = FontWeight.Normal,
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // Plot header
                     Text(
                         text = "📖 Plot",
                         fontSize = 14.sp,
                         style = TextStyle(
                             fontWeight = FontWeight.SemiBold,
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
                     )
 
+                    // Plot text
                     Text(
                         text = movie.plot,
                         fontSize = with(density) { 12.sp / fontScale },
                         style = TextStyle(
                             fontWeight = FontWeight.Normal,
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
                     )
                 }

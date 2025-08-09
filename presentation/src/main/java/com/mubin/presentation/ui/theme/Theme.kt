@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.mubin.common.utils.logger.MyImdbLogger
 
 val LightColors = lightColorScheme(
     primary = Color(0xFF37474F),           // Cool grey - buttons, icons, top bar
@@ -49,6 +50,16 @@ val DarkColors = darkColorScheme(
     onSecondary = Color(0xFFECECEC)
 )
 
+/**
+ * Composable function that sets up the theme for the MyIMDB app.
+ *
+ * Applies dark or light color schemes, adjusts the system status bar color and appearance,
+ * and wraps the content in [MaterialTheme] with typography and colors.
+ *
+ * @param darkTheme If true, uses dark theme colors; otherwise uses light theme.
+ *                  Defaults to system dark mode setting.
+ * @param content The composable content to apply the theme to.
+ */
 @Composable
 fun MyIMDBTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -59,20 +70,29 @@ fun MyIMDBTheme(
     val context = LocalContext.current
 
     SideEffect {
-        val window = (context as? Activity)?.window ?: return@SideEffect
+        val window = (context as? Activity)?.window
+        if (window == null) {
+            MyImdbLogger.d("MyIMDBTheme", "No activity window found; skipping status bar setup.")
+            return@SideEffect
+        }
 
+        // Set status bar background color to match theme background
         @Suppress("DEPRECATION")
         window.statusBarColor = colorScheme.background.toArgb()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // For API 30+, control light/dark status bar icons with WindowInsetsController
             window.insetsController?.setSystemBarsAppearance(
                 if (!darkTheme) WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS else 0,
                 WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
             )
+            MyImdbLogger.d("MyIMDBTheme", "Set status bar appearance for API 30+ with darkTheme=$darkTheme")
         } else {
+            // For older APIs, use WindowCompat to control status bar icon color
             @Suppress("DEPRECATION")
             WindowCompat.getInsetsController(window, view)
                 .isAppearanceLightStatusBars = !darkTheme
+            MyImdbLogger.d("MyIMDBTheme", "Set status bar appearance for pre-API 30 with darkTheme=$darkTheme")
         }
     }
 

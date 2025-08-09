@@ -50,10 +50,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.domain.model.Movie
 import com.mubin.presentation.R
 import com.mubin.presentation.ui.HomeViewModel
 
+/**
+ * Screen displaying the user's wishlist of movies.
+ *
+ * Shows the total count of wishlist items, a list of wishlist movies,
+ * or an empty state message if the wishlist is empty.
+ *
+ * @param viewmodel The [HomeViewModel] managing UI state and actions
+ * @param onNavigateToDetails Callback to navigate to movie details screen with movie ID
+ * @param onBackClick Callback triggered when back navigation is requested
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WishlistScreen(
@@ -72,17 +83,16 @@ fun WishlistScreen(
                         text = "Wishlist",
                         fontWeight = FontWeight.SemiBold,
                         fontSize = with(density) { 16.sp / fontScale },
-                        style = TextStyle(
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
-                        ),
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false)),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        MyImdbLogger.d("WishlistScreen", "Back navigation clicked")
+                        onBackClick()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -100,6 +110,7 @@ fun WishlistScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            // Show total wishlist count if not empty
             if (uiState.wishlist.isNotEmpty()) {
                 Text(
                     text = "Total Wishlist: ${uiState.wishlist.size}",
@@ -111,10 +122,10 @@ fun WishlistScreen(
                 )
             }
 
+            // Show empty state UI if wishlist is empty and not loading
             if (uiState.wishlist.isEmpty() && !uiState.isLoading) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -133,9 +144,9 @@ fun WishlistScreen(
                     }
                 }
             } else {
+                // Show list of wishlist items
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         top = 8.dp,
@@ -147,14 +158,19 @@ fun WishlistScreen(
                     items(uiState.wishlist) { movie ->
                         WishlistItem(
                             movie = movie,
-                            onClick = { onNavigateToDetails(movie.id) },
+                            onClick = {
+                                MyImdbLogger.d("WishlistScreen", "Wishlist item clicked: ${movie.title}")
+                                onNavigateToDetails(movie.id)
+                            },
                             isInWishlist = true,
                             onToggleWishlist = { status ->
+                                MyImdbLogger.d("WishlistScreen", "Wishlist toggle for ${movie.title}, status: $status")
                                 viewmodel.onWishlistToggle(movie.id, status)
                             }
                         )
                     }
 
+                    // Show loading indicator if loading
                     if (uiState.isLoading) {
                         item {
                             Box(
@@ -173,6 +189,17 @@ fun WishlistScreen(
     }
 }
 
+/**
+ * Composable displaying a single movie item in the wishlist.
+ *
+ * Shows movie poster, title, year, runtime, and a delete button
+ * to remove the movie from the wishlist.
+ *
+ * @param movie The [Movie] data to display
+ * @param onClick Callback invoked when the whole item is clicked
+ * @param isInWishlist Boolean indicating if movie is currently in wishlist (always true here)
+ * @param onToggleWishlist Callback to toggle wishlist status, triggered by delete icon button
+ */
 @Composable
 fun WishlistItem(
     movie: Movie,
@@ -181,11 +208,15 @@ fun WishlistItem(
     onToggleWishlist: (Boolean) -> Unit
 ) {
     val density = LocalDensity.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable { onClick() },
+            .clickable {
+                MyImdbLogger.d("WishlistItem", "Movie clicked: ${movie.title}")
+                onClick()
+            },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -193,10 +224,7 @@ fun WishlistItem(
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .padding(8.dp)
-            ) {
+            Row(modifier = Modifier.padding(8.dp)) {
                 AsyncImage(
                     model = movie.posterUrl,
                     contentDescription = movie.title,
@@ -218,47 +246,32 @@ fun WishlistItem(
                     Text(
                         text = movie.title,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize =  with(density) { 16.sp / fontScale },
+                        fontSize = with(density) { 16.sp / fontScale },
                         style = TextStyle(
                             fontWeight = FontWeight.Bold,
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(
-                        modifier = Modifier
-                            .size(8.dp)
-                    )
+                    Spacer(modifier = Modifier.size(8.dp))
                     Text(
                         text = "📅 Year: ${movie.year}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = with(density) { 14.sp / fontScale },
-                        style = TextStyle(
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
-                        )
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
                     )
-                    Spacer(
-                        modifier = Modifier
-                            .size(8.dp)
-                    )
+                    Spacer(modifier = Modifier.size(8.dp))
                     Text(
                         text = "⏱️ Runtime: ${movie.runtime} mins",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = with(density) { 14.sp / fontScale },
-                        style = TextStyle(
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
-                        )
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
                     )
                 }
             }
 
+            // Delete button on top-right corner
             IconButton(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -269,11 +282,14 @@ fun WishlistItem(
                         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
                         shape = CircleShape
                     ),
-                onClick = { onToggleWishlist(!isInWishlist) }
+                onClick = {
+                    MyImdbLogger.d("WishlistItem", "Delete clicked for movie: ${movie.title}")
+                    onToggleWishlist(!isInWishlist)
+                }
             ) {
                 Icon(
                     imageVector = Icons.Filled.Delete,
-                    contentDescription = "Wishlist"
+                    contentDescription = "Remove from Wishlist"
                 )
             }
         }
