@@ -7,5 +7,5 @@ data class MoviesResponse(
     val genres: List<String> = emptyList(),
 
     @SerializedName("movies")
-    val movies: List<Movie> = emptyList()
+    val movies: List<MovieItem> = emptyList()
 )

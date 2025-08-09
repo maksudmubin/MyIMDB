@@ -2,7 +2,7 @@ package com.mubin.network.model
 
 import com.google.gson.annotations.SerializedName
 
-data class Movie(
+data class MovieItem(
     @SerializedName("id")
     val id: Int,
 
