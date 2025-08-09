@@ -1,6 +1,7 @@
 package com.mubin.presentation.ui.state
 
-import com.mubin.network.model.Movie
+import com.mubin.domain.model.Movie
+
 
 data class HomeUIState(
     val isLoading: Boolean = true,
