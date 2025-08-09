@@ -47,11 +47,7 @@ android {
 
 dependencies {
     implementation(project(":presentation"))
-    implementation(project(":domain"))
     implementation(project(":data"))
-    implementation(project(":core:database"))
-    implementation(project(":core:network"))
-    implementation(project(":core:common"))
 
     implementation(libs.androidx.activity.compose)
 
