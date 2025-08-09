@@ -1,13 +1,14 @@
 package com.mubin.data.repo
 
+import com.mubin.common.utils.network.NetworkResult
 import com.mubin.database.dao.GenreDao
 import com.mubin.database.dao.MovieDao
 import com.mubin.database.entity.GenreEntity
 import com.mubin.database.entity.MovieEntity
+import com.mubin.domain.model.Movie
 import com.mubin.domain.repo.MovieRepository
-import com.mubin.network.model.Movie
+import com.mubin.network.model.MovieItem
 import com.mubin.network.service.MovieApiService
-import com.mubin.network.util.NetworkResult
 import com.mubin.network.util.executeApiRequest
 
 class MovieRepositoryImpl(
@@ -80,6 +81,20 @@ class MovieRepositoryImpl(
     override suspend fun getAllGenres(): List<String> {
         return genreDao.getAllGenres().map { it.toDomain() }
     }
+
+    fun MovieItem.toEntity(): MovieEntity = MovieEntity(
+        id = id,
+        title = title,
+        year = year,
+        runtime = runtime,
+        genres = genres,
+        director = director,
+        actors = actors,
+        plot = plot,
+        posterUrl = posterUrl,
+        isInWishlist = false
+    )
+
     fun MovieEntity.toDomain(): Movie = Movie(
         id = id,
         title = title,
@@ -91,19 +106,6 @@ class MovieRepositoryImpl(
         plot = plot,
         posterUrl = posterUrl,
         isInWishlist = isInWishlist
-    )
-
-    fun Movie.toEntity(): MovieEntity = MovieEntity(
-        id = id,
-        title = title,
-        year = year,
-        runtime = runtime,
-        genres = genres,
-        director = director,
-        actors = actors,
-        plot = plot,
-        posterUrl = posterUrl,
-        isInWishlist = false
     )
 
     fun GenreEntity.toDomain(): String = name
