@@ -1,4 +1,4 @@
-package com.mubin.network.util
+package com.mubin.common.utils.network
 
 sealed class NetworkResult<out T> {
     data class Success<out T>(val data: T) : NetworkResult<T>()
