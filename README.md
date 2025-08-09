@@ -49,19 +49,19 @@ A beautifully designed modern movie catalog app. Built with **Jetpack Compose**,
 
 ```text
 📦 MyIMDB/
-├── :app                  // Main entry point
+├── :app                  // Main entry point, depends on :presentation and :data only
 ├── :presentation         // UI layer with ViewModels & Screens
-├── :domain               // UseCases, Models, Repository Contracts
-├── :data                 // Repositories, DTOs, Mappers
-├── :core:network         // Retrofit setup, interceptors
-├── :core:database        // Room DB config, DAOs, Entities
-├── :core:common          // Shared utils, constants, extensions
+├── :domain               // UseCases, pure domain models, and repository interfaces
+├── :data                 // Repository implementations, DTOs, mappers, and DI aggregator module
+├── :core:network         // Retrofit setup, network DTOs, interceptors, Retrofit-dependent DI module
+├── :core:database        // Room DB config, DAOs, entities, database DI module
+├── :core:common          // Shared pure Kotlin utilities, constants, result wrappers (no framework dependencies)
 ```
 
 ### 🔄 Data Flow
 
 ```
-UI (Compose) 🔁 ViewModel (StateFlow) 🔁 UseCase 🔁 Repository 🔁 [Remote + Local]
+UI (Compose) 🔁 ViewModel (StateFlow) 🔁 UseCase (Domain) 🔁 Repository (Data) 🔁 [Remote (Network) + Local (Database)]
 ```
 
 - **Domain Layer**: Business logic, interfaces, and models.
