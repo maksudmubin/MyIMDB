@@ -2,6 +2,8 @@ package com.mubin.presentation.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mubin.common.utils.network.NetworkResult
+import com.mubin.domain.model.Movie
 import com.mubin.domain.usecase.GetAllGenresUseCase
 import com.mubin.domain.usecase.GetMovieByIdUseCase
 import com.mubin.domain.usecase.GetMoviesByGenrePaginatedUseCase
@@ -12,8 +14,6 @@ import com.mubin.domain.usecase.GetTotalMovieCountUseCase
 import com.mubin.domain.usecase.GetWishlistUseCase
 import com.mubin.domain.usecase.SyncMoviesIfNeededUseCase
 import com.mubin.domain.usecase.UpdateWishlistStatusUseCase
-import com.mubin.network.model.Movie
-import com.mubin.network.util.NetworkResult
 import com.mubin.presentation.ui.state.HomeUIState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
