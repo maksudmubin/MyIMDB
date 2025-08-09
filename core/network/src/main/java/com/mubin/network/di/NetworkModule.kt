@@ -16,7 +16,6 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
-import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -25,11 +24,9 @@ object NetworkModule {
     private const val BASE_URL = "https://raw.githubusercontent.com/erik-sytnyk/"
 
     @Provides
-    @Singleton
     fun provideGson(): Gson = GsonBuilder().create()
 
     @Provides
-    @Singleton
     fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
 
         val cacheSize = 5L * 1024L * 1024L // 5MB
@@ -51,7 +48,6 @@ object NetworkModule {
     }
 
     @Provides
-    @Singleton
     fun provideRetrofit(gson: Gson, client: OkHttpClient): Retrofit =
         Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -60,7 +56,6 @@ object NetworkModule {
             .build()
 
     @Provides
-    @Singleton
     fun provideMovieApi(retrofit: Retrofit): MovieApiService =
         retrofit.create(MovieApiService::class.java)
 }
