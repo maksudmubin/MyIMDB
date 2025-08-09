@@ -1,7 +1,7 @@
 package com.mubin.domain.usecase
 
+import com.mubin.common.utils.network.NetworkResult
 import com.mubin.domain.repo.MovieRepository
-import com.mubin.network.util.NetworkResult
 
 class SyncMoviesIfNeededUseCase(
     private val repository: MovieRepository

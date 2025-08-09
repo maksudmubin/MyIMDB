@@ -1,7 +1,7 @@
 package com.mubin.domain.usecase
 
+import com.mubin.domain.model.Movie
 import com.mubin.domain.repo.MovieRepository
-import com.mubin.network.model.Movie
 
 class GetMoviesByGenrePaginatedUseCase(
     private val repository: MovieRepository
