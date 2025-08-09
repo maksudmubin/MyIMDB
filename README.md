@@ -7,7 +7,7 @@ A beautifully designed modern movie catalog app. Built with **Jetpack Compose**,
 ## 📲 Download
 
 - 🔗 [Download APK](https://github.com/maksudmubin/MyIMDB/releases/download/v1.0.0/MyIMDB.apk)  
-- 📺 [Watch Demo Video](https://drive.google.com/file/d/1ny4S2-36xTqlk_7aiTSejnOu8RYx5b9p/view?usp=sharing)
+- 📺 [Watch Video](https://drive.google.com/file/d/1ny4S2-36xTqlk_7aiTSejnOu8RYx5b9p/view?usp=sharing)
 
 ---
 
