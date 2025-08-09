@@ -86,8 +86,6 @@ UI (Compose) 🔁 ViewModel (StateFlow) 🔁 UseCase (Domain) 🔁 Repository (D
 
 ## 🖼️ Screenshots
 
-> Place your images inside a `screenshots/` folder in the root directory. Below is the structure for both light and dark themes:
-
 ### 🧊 Splash Screen
 | Light Mode                                    | Dark Mode                                   |
 |-----------------------------------------------|---------------------------------------------|
