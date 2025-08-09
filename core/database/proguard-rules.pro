@@ -19,3 +19,18 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Room database classes, entities, DAOs
+-keep class androidx.room.RoomDatabase { *; }
+-keep class androidx.room.migration.Migration { *; }
+
+-keepclassmembers class * {
+    @androidx.room.* <methods>;
+    @androidx.room.* <fields>;
+}
+
+# Keep Room entities and DAO classes (replace package with yours)
+-keep class com.yourapp.core.database.entity.** { *; }
+-keep class com.yourapp.core.database.dao.** { *; }
+
+# Kotlin metadata
+-keepclassmembers class kotlin.Metadata { *; }

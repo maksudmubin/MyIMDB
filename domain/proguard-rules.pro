@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Domain layer - mostly pure Kotlin interfaces and use cases, minimal rules
+-keep interface com.yourapp.domain.repository.* { *; }
+-keep class com.yourapp.domain.usecase.** { *; }
+
+# Kotlin metadata
+-keepclassmembers class kotlin.Metadata { *; }

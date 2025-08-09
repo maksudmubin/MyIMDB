@@ -19,3 +19,25 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Retrofit & OkHttp
+-keep interface retrofit2.http.* { *; }
+-keep class retrofit2.* { *; }
+-keepattributes RuntimeVisibleAnnotations
+
+-dontwarn okhttp3.**
+-keep class okhttp3.** { *; }
+
+# Gson model classes (replace package with your actual one)
+-keep class com.yourapp.core.network.model.** { *; }
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# Kotlin metadata
+-keepclassmembers class kotlin.Metadata { *; }
+
+# Keep classes annotated with @Keep
+-keep @androidx.annotation.Keep class * { *; }
+-keepclassmembers class * {
+    @androidx.annotation.Keep *;
+}

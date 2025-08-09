@@ -19,3 +19,12 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Data layer - usually repositories and mappers
+# Keep model classes used for mapping (replace package)
+-keep class com.yourapp.data.model.** { *; }
+
+# Keep repository interfaces/impl if using reflection or DI
+-keep interface com.yourapp.domain.repository.* { *; }
+
+# Kotlin metadata
+-keepclassmembers class kotlin.Metadata { *; }

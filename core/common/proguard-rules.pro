@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Keep Kotlin metadata to avoid issues with Kotlin reflection or tooling
+-keepclassmembers class kotlin.Metadata { *; }
+
+# Keep classes annotated with @Keep if you use that annotation in common module
+-keep @androidx.annotation.Keep class * { *; }
+-keepclassmembers class * {
+    @androidx.annotation.Keep *;
+}
