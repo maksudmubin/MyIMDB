@@ -95,6 +95,14 @@ interface MovieRepository {
     suspend fun getWishlist(): List<Movie>
 
     /**
+     * Checks if a movie is currently in the wishlist.
+     *
+     * @param id The movie ID.
+     * @return True if the movie is in the wishlist, false otherwise.
+     */
+    suspend fun isMovieInWishlist(id: Int): Boolean
+
+    /**
      * Retrieves all genres available in the database.
      *
      * @return List of genre names as strings.
