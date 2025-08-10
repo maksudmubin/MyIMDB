@@ -1,5 +1,6 @@
 package com.mubin.data.di
 
+import com.mubin.android.di.InternetCheckModule
 import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.database.di.DatabaseModule
 import com.mubin.domain.di.UseCaseModule
@@ -13,6 +14,7 @@ import dagger.hilt.components.SingletonComponent
  * for the MyIMDB app.
  *
  * Includes:
+ * - [InternetCheckModule] for internet check dependencies
  * - [NetworkModule] for networking dependencies
  * - [DatabaseModule] for database and DAO dependencies
  * - [UseCaseModule] for business logic use cases (assumed present)
@@ -21,6 +23,7 @@ import dagger.hilt.components.SingletonComponent
  * the SingletonComponent scope.
  */
 @Module(includes = [
+    InternetCheckModule::class,
     NetworkModule::class,
     DatabaseModule::class,
     UseCaseModule::class
