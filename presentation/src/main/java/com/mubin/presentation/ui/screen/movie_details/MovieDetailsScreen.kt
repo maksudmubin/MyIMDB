@@ -1,4 +1,4 @@
-package com.mubin.presentation.ui.screen
+package com.mubin.presentation.ui.screen.movie_details
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -30,68 +28,41 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.domain.model.Movie
 import com.mubin.presentation.R
-import com.mubin.presentation.ui.HomeViewModel
+import com.mubin.presentation.ui.screen.movie_list.AnimatedWishlistButton
 
-/**
- * Screen composable showing detailed information about a movie identified by [id].
- *
- * Fetches the movie asynchronously from the [viewmodel], shows a loading indicator while fetching,
- * displays an error message if movie is not found, or shows [MovieDetailsContent] on success.
- *
- * Also provides a top app bar with back navigation and wishlist navigation buttons.
- *
- * @param id The ID of the movie to display
- * @param viewmodel The [HomeViewModel] providing UI state and movie fetching
- * @param onNavigateToWishlist Callback invoked when wishlist icon in the app bar is clicked
- * @param onBackClick Callback invoked when back navigation icon is clicked
- */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieDetailsScreen(
-    id: Int,
-    viewmodel: HomeViewModel,
+    movieId: Int,
+    viewModel: MovieDetailsViewModel,
     onNavigateToWishlist: () -> Unit,
     onBackClick: () -> Unit
 ) {
-    val density = LocalDensity.current
-    val uiState by viewmodel.uiState.collectAsState()
-    var movie by remember { mutableStateOf<Movie?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Load movie by id asynchronously on first composition and when id changes
-    LaunchedEffect(id) {
-        viewmodel.getMovieById(id) { movieData ->
-            movie = movieData
-            isLoading = false
-            MyImdbLogger.d("MovieDetailsScreen", "Loaded movie with id $id: $movieData")
-        }
+    LaunchedEffect(movieId) {
+        viewModel.handleIntent(MovieDetailsIntent.LoadMovie(movieId))
     }
 
     Scaffold(
@@ -99,73 +70,28 @@ fun MovieDetailsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = movie?.title ?: "Movie Details",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = with(density) { 16.sp / fontScale },
-                        style = TextStyle(
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
-                        ),
+                        text = uiState.movie?.title ?: "Movie Details",
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        fontWeight = FontWeight.SemiBold
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        MyImdbLogger.d("MovieDetailsScreen", "Back button clicked")
-                        onBackClick()
-                    }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 16.dp)
-                    ) {
-                        IconButton(onClick = {
-                            MyImdbLogger.d("MovieDetailsScreen", "Navigate to Wishlist clicked")
-                            onNavigateToWishlist()
-                        }) {
-                            Icon(Icons.Default.Favorite, contentDescription = "Wishlist")
-                        }
-                        if (uiState.wishlist.isNotEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(top = 4.dp, end = 4.dp)
-                                    .size(18.dp)
-                                    .background(Color.Red, CircleShape)
-                                    .align(Alignment.TopEnd)
-                            ) {
-                                Text(
-                                    modifier = Modifier.align(Alignment.Center),
-                                    text = uiState.wishlist.size.toString(),
-                                    color = Color.White,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    textAlign = TextAlign.Center,
-                                    style = TextStyle(
-                                        platformStyle = PlatformTextStyle(
-                                            includeFontPadding = false
-                                        )
-                                    )
-                                )
-                            }
-                        }
+                    IconButton(onClick = onNavigateToWishlist) {
+                        Icon(Icons.Default.Favorite, contentDescription = "Wishlist")
                     }
-                },
-                colors = TopAppBarDefaults.mediumTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                }
             )
         }
     ) { innerPadding ->
+
         when {
-            isLoading -> {
-                // Show loading spinner while fetching movie data
+            uiState.isLoading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -176,8 +102,33 @@ fun MovieDetailsScreen(
                 }
             }
 
-            movie == null -> {
-                // Show error text if movie not found
+            uiState.error != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error)
+                }
+            }
+
+            uiState.movie != null -> {
+                uiState.movie?.let { movie ->
+                    MovieDetailsContent(
+                        movie = movie,
+                        isInWishlist = uiState.isInWishlist,
+                        onToggleWishlist = { newStatus ->
+                            viewModel.handleIntent(
+                                MovieDetailsIntent.ToggleWishlist(movie.id, newStatus)
+                            )
+                        },
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
+
+            else -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -187,25 +138,9 @@ fun MovieDetailsScreen(
                     Text("Movie not found", color = MaterialTheme.colorScheme.error)
                 }
             }
-
-            else -> {
-                // Show movie details content with wishlist toggle
-                MovieDetailsContent(
-                    movie = movie!!,
-                    isInWishlist = uiState.wishlist.any { it.id == movie?.id },
-                    onToggleWishlist = { status ->
-                        movie?.let {
-                            MyImdbLogger.d("MovieDetailsScreen", "Wishlist toggle for movie id ${it.id}: $status")
-                            viewmodel.onWishlistToggle(it.id, status)
-                        }
-                    },
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
         }
     }
 }
-
 
 /**
  * Composable displaying detailed information about a movie.
