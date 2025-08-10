@@ -20,7 +20,7 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 # Application class and entry points
--keep class com.yourapp.app.** { *; }
+-keep class com.mubin.app.** { *; }
 
 # Keep Hilt/Dagger annotations and generated code
 -keep class dagger.hilt.** { *; }
