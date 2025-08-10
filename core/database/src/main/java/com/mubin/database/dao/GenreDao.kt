@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.database.entity.GenreEntity
 
 /**
@@ -24,9 +23,7 @@ interface GenreDao {
      * @param genres List of genres to insert.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(genres: List<GenreEntity>) {
-        MyImdbLogger.d("GenreDao", "Inserting ${genres.size} genres into database.")
-    }
+    suspend fun insertAll(genres: List<GenreEntity>)
 
     /**
      * Retrieves all genres from the database.
