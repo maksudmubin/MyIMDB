@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.database.entity.MovieEntity
 
 /**
@@ -24,9 +23,7 @@ interface MovieDao {
      * @param movies List of movies to insert.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(movies: List<MovieEntity>) {
-        MyImdbLogger.d("MovieDao", "Inserting ${movies.size} movies into database.")
-    }
+    suspend fun insertAll(movies: List<MovieEntity>)
 
     /**
      * Returns the total number of movies stored in the database.
