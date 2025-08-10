@@ -1,4 +1,4 @@
-package com.mubin.presentation.ui.screen
+package com.mubin.presentation.ui.screen.wishlist
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,27 +52,15 @@ import coil.compose.AsyncImage
 import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.domain.model.Movie
 import com.mubin.presentation.R
-import com.mubin.presentation.ui.HomeViewModel
 
-/**
- * Screen displaying the user's wishlist of movies.
- *
- * Shows the total count of wishlist items, a list of wishlist movies,
- * or an empty state message if the wishlist is empty.
- *
- * @param viewmodel The [HomeViewModel] managing UI state and actions
- * @param onNavigateToDetails Callback to navigate to movie details screen with movie ID
- * @param onBackClick Callback triggered when back navigation is requested
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WishlistScreen(
-    viewmodel: HomeViewModel,
+    viewModel: WishlistViewModel,
     onNavigateToDetails: (Int) -> Unit,
     onBackClick: () -> Unit
 ) {
-    val density = LocalDensity.current
-    val uiState by viewmodel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -82,25 +69,15 @@ fun WishlistScreen(
                     Text(
                         text = "Wishlist",
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = with(density) { 16.sp / fontScale },
-                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false)),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        MyImdbLogger.d("WishlistScreen", "Back navigation clicked")
-                        onBackClick()
-                    }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.mediumTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                }
             )
         }
     ) { innerPadding ->
@@ -110,7 +87,6 @@ fun WishlistScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Show total wishlist count if not empty
             if (uiState.wishlist.isNotEmpty()) {
                 Text(
                     text = "Total Wishlist: ${uiState.wishlist.size}",
@@ -122,7 +98,6 @@ fun WishlistScreen(
                 )
             }
 
-            // Show empty state UI if wishlist is empty and not loading
             if (uiState.wishlist.isEmpty() && !uiState.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -144,33 +119,23 @@ fun WishlistScreen(
                     }
                 }
             } else {
-                // Show list of wishlist items
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        top = 8.dp,
-                        end = 16.dp,
-                        bottom = 16.dp
-                    ),
+                    contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(uiState.wishlist) { movie ->
                         WishlistItem(
                             movie = movie,
-                            onClick = {
-                                MyImdbLogger.d("WishlistScreen", "Wishlist item clicked: ${movie.title}")
-                                onNavigateToDetails(movie.id)
-                            },
+                            onClick = { onNavigateToDetails(movie.id) },
                             isInWishlist = true,
                             onToggleWishlist = { status ->
-                                MyImdbLogger.d("WishlistScreen", "Wishlist toggle for ${movie.title}, status: $status")
-                                viewmodel.onWishlistToggle(movie.id, status)
+                                viewModel.handleIntent(
+                                    WishlistIntent.ToggleWishlist(movie.id, status)
+                                )
                             }
                         )
                     }
-
-                    // Show loading indicator if loading
                     if (uiState.isLoading) {
                         item {
                             Box(
