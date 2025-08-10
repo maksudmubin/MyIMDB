@@ -1,4 +1,4 @@
-package com.mubin.presentation.ui.screen
+package com.mubin.presentation.ui.screen.splash
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -17,23 +17,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.presentation.R
 import com.mubin.presentation.ui.HomeViewModel
-import com.mubin.presentation.ui.util.NetworkHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -53,36 +47,24 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun SplashScreen(
-    viewModel: HomeViewModel,
+    viewModel: SplashViewModel,
     onNavigateToMovieList: () -> Unit,
     onFinish: () -> Unit
 ) {
-    val density = LocalDensity.current
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
-    var showFirstLaunchDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
 
-    // Check if first launch and internet connectivity
+    // Kick off first launch check
     LaunchedEffect(Unit) {
-        MyImdbLogger.d("SplashScreen", "Checking if first launch")
-        viewModel.checkIfFirstLaunch { isFirstLaunch ->
-            MyImdbLogger.d("SplashScreen", "Is first launch: $isFirstLaunch")
-            if (isFirstLaunch) {
-                if (!NetworkHelper(context).hasInternetConnection()) {
-                    MyImdbLogger.d("SplashScreen", "No internet on first launch, showing dialog")
-                    showFirstLaunchDialog = true
-                }
-            }
-        }
+        viewModel.handleIntent(SplashUiIntent.CheckFirstLaunch)
     }
 
-    // Navigate to movie list after data sync completes
+    // Navigate when data is synced
     LaunchedEffect(uiState.isDataSynced) {
         if (uiState.isDataSynced) {
-            MyImdbLogger.d("SplashScreen", "Data synced, navigating to movie list")
             scope.launch {
-                delay(1000) // pause for splash effect
+                delay(1000) // splash delay
                 onNavigateToMovieList()
             }
         }
@@ -113,39 +95,31 @@ fun SplashScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            CircularProgressIndicator()
+            if (uiState.isLoading) {
+                CircularProgressIndicator()
+            }
         }
 
-        // Show dialog if no internet on first launch
-        if (showFirstLaunchDialog) {
+        // No internet dialog
+        if (uiState.showNoInternetDialog) {
             AlertDialog(
                 onDismissRequest = {},
                 title = { Text("No Internet") },
                 text = { Text("Internet connection is required on first launch.") },
                 confirmButton = {
-                    TextButton(onClick = {
-                        MyImdbLogger.d("SplashScreen", "Retry clicked in no internet dialog")
-                        if (NetworkHelper(context).hasInternetConnection()) {
-                            showFirstLaunchDialog = false
-                            viewModel.syncInitialData()
-                        }
-                    }) {
+                    TextButton(onClick = { viewModel.handleIntent(SplashUiIntent.RetrySync) }) {
                         Text("Retry")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = {
-                        MyImdbLogger.d("SplashScreen", "Exit clicked in no internet dialog")
-                        showFirstLaunchDialog = false
-                        onFinish()
-                    }) {
+                    TextButton(onClick = { onFinish() }) {
                         Text("Exit")
                     }
                 }
             )
         }
 
-        // Show dialog on sync error with retry/exit options
+        // Sync error dialog
         uiState.error?.let { errorMsg ->
             AlertDialog(
                 onDismissRequest = {},
@@ -153,23 +127,14 @@ fun SplashScreen(
                 text = { Text(errorMsg) },
                 confirmButton = {
                     TextButton(onClick = {
-                        MyImdbLogger.d("SplashScreen", "Retry clicked in sync error dialog")
                         viewModel.clearError()
-                        if (NetworkHelper(context).hasInternetConnection()) {
-                            viewModel.syncInitialData()
-                        } else {
-                            showFirstLaunchDialog = true
-                        }
+                        viewModel.handleIntent(SplashUiIntent.RetrySync)
                     }) {
                         Text("Retry")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = {
-                        MyImdbLogger.d("SplashScreen", "Exit clicked in sync error dialog")
-                        viewModel.clearError()
-                        onFinish()
-                    }) {
+                    TextButton(onClick = { onFinish() }) {
                         Text("Exit")
                     }
                 }
