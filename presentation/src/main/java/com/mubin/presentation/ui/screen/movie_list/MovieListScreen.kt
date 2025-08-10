@@ -1,4 +1,4 @@
-package com.mubin.presentation.ui.screen
+package com.mubin.presentation.ui.screen.movie_list
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -104,76 +104,67 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieListScreen(
-    viewModel: HomeViewModel,
+    viewModel: MovieListViewModel,
     onNavigateToWishlist: () -> Unit,
     onNavigateToDetails: (Movie) -> Unit,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit
 ) {
-    val density = LocalDensity.current
     val uiState by viewModel.uiState.collectAsState()
+
     val gridState = rememberLazyGridState()
     val listState = rememberLazyListState()
-    var isGridView by rememberSaveable { mutableStateOf(true) }
     var lastVisibleIndex by rememberSaveable { mutableIntStateOf(0) }
     var lastVisibleOffset by rememberSaveable { mutableIntStateOf(0) }
 
-    // Log initial states
-    MyImdbLogger.d("MovieListScreen", "Init isGridView=$isGridView")
+    var isGridView by rememberSaveable { mutableStateOf(true) }
 
-    // Observe grid scroll and trigger loading more movies near the end
+    // Load next page when scrolled near bottom - for grid
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .distinctUntilChanged()
             .collect { index ->
-                MyImdbLogger.d("MovieListScreen", "Grid last visible index: $index")
-                if (index != null && index >= uiState.movieList.size - 1) {
-                    MyImdbLogger.d("MovieListScreen", "Loading next movies in grid")
-                    viewModel.loadNextMovies()
+                if (index != null && index >= uiState.movies.size - 1) {
+                    viewModel.handleIntent(MovieListIntent.LoadNextPage)
                 }
             }
     }
 
-    // Observe list scroll and trigger loading more movies near the end
+    // Load next page when scrolled near bottom - for list
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .distinctUntilChanged()
             .collect { index ->
-                MyImdbLogger.d("MovieListScreen", "List last visible index: $index")
-                if (index != null && index >= uiState.movieList.size - 1) {
-                    MyImdbLogger.d("MovieListScreen", "Loading next movies in list")
-                    viewModel.loadNextMovies()
+                if (index != null && index >= uiState.movies.size - 1) {
+                    viewModel.handleIntent(MovieListIntent.LoadNextPage)
                 }
             }
     }
 
-    // Track first visible item and offset for grid to restore scroll position on toggle
+    // Track scroll position for grid
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
                 if (isGridView) {
-                    MyImdbLogger.d("MovieListScreen", "Saving grid scroll position index=$index offset=$offset")
                     lastVisibleIndex = index
                     lastVisibleOffset = offset
                 }
             }
     }
 
-    // Track first visible item and offset for list to restore scroll position on toggle
+    // Track scroll position for list
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
                 if (!isGridView) {
-                    MyImdbLogger.d("MovieListScreen", "Saving list scroll position index=$index offset=$offset")
                     lastVisibleIndex = index
                     lastVisibleOffset = offset
                 }
             }
     }
 
-    // Restore scroll position when toggling between grid and list views
+    // Restore scroll position when toggling view
     LaunchedEffect(isGridView) {
-        MyImdbLogger.d("MovieListScreen", "Toggling view to ${if (isGridView) "Grid" else "List"} and restoring scroll position")
         if (isGridView) {
             gridState.scrollToItem(lastVisibleIndex, lastVisibleOffset)
         } else {
@@ -181,7 +172,6 @@ fun MovieListScreen(
         }
     }
 
-    // Main scaffold holding the top app bar and body content
     Scaffold(
         topBar = {
             TopAppBar(
@@ -189,12 +179,7 @@ fun MovieListScreen(
                     Text(
                         text = "My IMDB",
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = with(density) { 16.sp / fontScale },
-                        style = TextStyle(
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            )
-                        ),
+                        fontSize = 16.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -205,10 +190,9 @@ fun MovieListScreen(
                     actionIconContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 actions = {
-                    // Wishlist icon with badge count if wishlist is not empty
+                    // Wishlist icon with badge count
                     Box(
-                        modifier = Modifier
-                            .padding(end = 8.dp)
+                        modifier = Modifier.padding(end = 8.dp)
                     ) {
                         IconButton(onClick = onNavigateToWishlist) {
                             Icon(Icons.Default.Favorite, contentDescription = "Wishlist")
@@ -227,12 +211,7 @@ fun MovieListScreen(
                                     color = Color.White,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    textAlign = TextAlign.Center,
-                                    style = TextStyle(
-                                        platformStyle = PlatformTextStyle(
-                                            includeFontPadding = false
-                                        )
-                                    )
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         }
@@ -245,8 +224,11 @@ fun MovieListScreen(
                         selectedGenre = uiState.selectedGenre.orEmpty(),
                         genres = uiState.genres,
                         onGenreSelected = { genre ->
-                            MyImdbLogger.d("MovieListScreen", "Genre selected: $genre")
-                            viewModel.onGenreSelected(genre.ifBlank { null })
+                            viewModel.handleIntent(
+                                MovieListIntent.SelectGenre(
+                                    if (genre.isBlank()) null else genre
+                                )
+                            )
                         }
                     )
 
@@ -256,13 +238,13 @@ fun MovieListScreen(
         }
     ) { innerPadding ->
 
-        // Main column holding search, toggle buttons, and movie list/grid
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Top controls: theme toggle, search bar, view toggle
+
+            // Controls row: theme toggle, search bar, view toggle
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -271,53 +253,47 @@ fun MovieListScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Theme toggle button
-                Row(
+                Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable {
-                            MyImdbLogger.d("MovieListScreen", "Theme toggle clicked")
                             onToggleTheme()
                         },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
+                        painter = if (isDarkTheme) painterResource(R.drawable.ic_dark_mode)
+                        else painterResource(R.drawable.ic_light_mode),
+                        contentDescription = "Toggle Theme",
                         modifier = Modifier.size(20.dp),
-                        painter = if (isDarkTheme)
-                            painterResource(R.drawable.ic_dark_mode)
-                        else
-                            painterResource(R.drawable.ic_light_mode),
-                        contentDescription = "Dark Mode",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                // Search bar input
+                // Search bar
                 CustomSearchBar(
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp),
                     query = uiState.searchQuery,
                     onQueryChange = {
-                        MyImdbLogger.d("MovieListScreen", "Search query changed: $it")
-                        viewModel.onSearchQueryChanged(it)
+                        viewModel.handleIntent(MovieListIntent.SearchQueryChanged(it))
                     }
                 )
 
-                // View toggle button (Grid/List)
-                Row(
+                // View toggle button (grid/list)
+                Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable {
                             isGridView = !isGridView
-                            MyImdbLogger.d("MovieListScreen", "View toggled. isGridView=$isGridView")
+                            viewModel.handleIntent(MovieListIntent.ToggleViewType)
                         },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(if (isGridView) R.drawable.ic_list else R.drawable.ic_grid),
@@ -328,7 +304,7 @@ fun MovieListScreen(
                 }
             }
 
-            // Show either grid or list of movies depending on isGridView state
+            // Movie list/grid
             if (isGridView) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
@@ -345,23 +321,22 @@ fun MovieListScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Movie items in grid
-                    items(uiState.movieList, key = { it.id }) { movie ->
+                    items(uiState.movies, key = { it.id }) { movie ->
                         MovieGridItem(
                             movie = movie,
-                            onClick = {
-                                MyImdbLogger.d("MovieListScreen", "Grid movie clicked: ${movie.title}")
-                                onNavigateToDetails(movie)
-                            },
+                            onClick = { onNavigateToDetails(movie) },
                             isInWishlist = uiState.wishlist.any { it.id == movie.id },
                             onToggleWishlist = { status ->
-                                MyImdbLogger.d("MovieListScreen", "Grid wishlist toggle: ${movie.title}, status=$status")
-                                viewModel.onWishlistToggle(movie.id, status)
+                                viewModel.handleIntent(
+                                    MovieListIntent.ToggleWishlist(
+                                        movieId = movie.id,
+                                        status = status
+                                    )
+                                )
                             }
                         )
                     }
 
-                    // Show loading indicator as a full span item when loading
                     if (uiState.isLoading) {
                         item(span = { GridItemSpan(2) }) {
                             Box(
@@ -389,23 +364,22 @@ fun MovieListScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Movie items in list
-                    items(uiState.movieList, key = { it.id }) { movie ->
+                    items(uiState.movies, key = { it.id }) { movie ->
                         MovieItem(
                             movie = movie,
-                            onClick = {
-                                MyImdbLogger.d("MovieListScreen", "List movie clicked: ${movie.title}")
-                                onNavigateToDetails(movie)
-                            },
+                            onClick = { onNavigateToDetails(movie) },
                             isInWishlist = uiState.wishlist.any { it.id == movie.id },
                             onToggleWishlist = { status ->
-                                MyImdbLogger.d("MovieListScreen", "List wishlist toggle: ${movie.title}, status=$status")
-                                viewModel.onWishlistToggle(movie.id, status)
+                                viewModel.handleIntent(
+                                    MovieListIntent.ToggleWishlist(
+                                        movieId = movie.id,
+                                        status = status
+                                    )
+                                )
                             }
                         )
                     }
 
-                    // Show loading indicator at bottom when loading
                     if (uiState.isLoading) {
                         item {
                             Box(
