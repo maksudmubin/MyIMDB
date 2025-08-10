@@ -129,6 +129,13 @@ class MovieRepositoryImpl(
         return wishlist
     }
 
+    /** @return True if the movie is in the wishlist, false otherwise. */
+    override suspend fun isMovieInWishlist(id: Int): Boolean {
+        val isInWishlist = movieDao.isMovieInWishlist(id)
+        MyImdbLogger.d("MovieRepositoryImpl", "Checked if movie id=$id is in wishlist: $isInWishlist.")
+        return isInWishlist
+    }
+
     /** Retrieves all genres as strings from the database. */
     override suspend fun getAllGenres(): List<String> {
         val genres = genreDao.getAllGenres().map { it.toDomain() }
