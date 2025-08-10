@@ -117,6 +117,15 @@ interface MovieDao {
     suspend fun updateWishlistStatus(id: Int, status: Boolean)
 
     /**
+     * Checks if the given movie is currently in the wishlist.
+     *
+     * @param id The ID of the movie to check.
+     * @return True if the movie is in the wishlist, false otherwise.
+     */
+    @Query("SELECT EXISTS(SELECT 1 FROM movies WHERE id = :id AND isInWishlist = 1)")
+    suspend fun isMovieInWishlist(id: Int): Boolean
+
+    /**
      * Retrieves all movies currently in the wishlist, ordered by year (descending).
      *
      * @return List of movies marked as in the wishlist.
