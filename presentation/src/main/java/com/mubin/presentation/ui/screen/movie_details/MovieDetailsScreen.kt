@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -36,12 +38,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,7 +53,6 @@ import coil.compose.AsyncImage
 import com.mubin.domain.model.Movie
 import com.mubin.presentation.R
 import com.mubin.presentation.ui.screen.movie_list.AnimatedWishlistButton
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,8 +85,35 @@ fun MovieDetailsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToWishlist) {
-                        Icon(Icons.Default.Favorite, contentDescription = "Wishlist")
+                    Box(
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        IconButton(onClick = onNavigateToWishlist) {
+                            Icon(Icons.Default.Favorite, contentDescription = "Wishlist")
+                        }
+                        if (uiState.wishlistCount > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 4.dp, end = 4.dp)
+                                    .size(18.dp)
+                                    .background(Color.Red, CircleShape)
+                                    .align(Alignment.TopEnd)
+                            ) {
+                                Text(
+                                    modifier = Modifier.align(Alignment.Center),
+                                    text = uiState.wishlistCount.toString(),
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        platformStyle = PlatformTextStyle(
+                                            includeFontPadding = false
+                                        )
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
             )
