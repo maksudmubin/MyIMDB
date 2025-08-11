@@ -9,6 +9,7 @@ import com.mubin.domain.usecase.GetMoviesByQueryAndGenrePaginatedUseCase
 import com.mubin.domain.usecase.GetMoviesByQueryPaginatedUseCase
 import com.mubin.domain.usecase.GetMoviesPaginatedUseCase
 import com.mubin.domain.usecase.GetTotalMovieCountUseCase
+import com.mubin.domain.usecase.GetTotalWishlistCountUseCase
 import com.mubin.domain.usecase.GetWishlistUseCase
 import com.mubin.domain.usecase.IsMovieInWishlistUseCase
 import com.mubin.domain.usecase.SyncMoviesIfNeededUseCase
@@ -85,6 +86,12 @@ object UseCaseModule {
     fun provideIsMovieInWishlistUseCase(repository: MovieRepository): IsMovieInWishlistUseCase {
         MyImdbLogger.d("UseCaseModule", "Providing IsMovieInWishlistUseCase")
         return IsMovieInWishlistUseCase(repository)
+    }
+
+    @Provides
+    fun provideGetTotalWishlistCountUseCase(repository: MovieRepository): GetTotalWishlistCountUseCase {
+        MyImdbLogger.d("UseCaseModule", "Providing GetTotalWishlistCountUseCase")
+        return GetTotalWishlistCountUseCase(repository)
     }
 
     @Provides
