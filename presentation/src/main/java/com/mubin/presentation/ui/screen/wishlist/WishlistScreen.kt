@@ -53,6 +53,18 @@ import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.domain.model.Movie
 import com.mubin.presentation.R
 
+/**
+ * Composable that displays the Wishlist screen UI.
+ *
+ * Shows the list of movies in the wishlist, handles empty states,
+ * loading indicators, and user interactions such as navigating to
+ * movie details or toggling wishlist status.
+ *
+ * @param viewModel The [WishlistViewModel] providing UI state and handling intents.
+ * @param onNavigateToDetails Callback invoked when a movie item is clicked,
+ *        passing the selected movie's ID.
+ * @param onBackClick Callback invoked when the back button in the top app bar is clicked.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WishlistScreen(
@@ -60,6 +72,7 @@ fun WishlistScreen(
     onNavigateToDetails: (Int) -> Unit,
     onBackClick: () -> Unit
 ) {
+    // Collect the current UI state from the ViewModel as a Compose state
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
@@ -81,12 +94,14 @@ fun WishlistScreen(
             )
         }
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            // Show total count of wishlist movies if not empty
             if (uiState.wishlist.isNotEmpty()) {
                 Text(
                     text = "Total Wishlist: ${uiState.wishlist.size}",
@@ -98,6 +113,7 @@ fun WishlistScreen(
                 )
             }
 
+            // Show empty state message and icon if wishlist is empty and not loading
             if (uiState.wishlist.isEmpty() && !uiState.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -119,6 +135,7 @@ fun WishlistScreen(
                     }
                 }
             } else {
+                // Show wishlist movies in a LazyColumn with spacing and padding
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
@@ -136,6 +153,8 @@ fun WishlistScreen(
                             }
                         )
                     }
+
+                    // Show loading indicator at the bottom when loading
                     if (uiState.isLoading) {
                         item {
                             Box(

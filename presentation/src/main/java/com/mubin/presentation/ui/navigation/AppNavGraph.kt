@@ -20,14 +20,39 @@ import com.mubin.presentation.ui.screen.splash.SplashViewModel
 import com.mubin.presentation.ui.screen.wishlist.WishlistScreen
 import com.mubin.presentation.ui.screen.wishlist.WishlistViewModel
 
+/**
+ * Main navigation graph for the MyIMDB app.
+ *
+ * This composable sets up the app's navigation using [NavHost], defining all
+ * the available destinations and their associated transitions, ViewModels, and
+ * navigation actions.
+ *
+ * Screens included in this navigation graph:
+ * - Splash Screen (Start Destination)
+ * - Movie List Screen
+ * - Movie Details Screen
+ * - Wishlist Screen
+ *
+ * @param navController [NavHostController] instance used to manage app navigation.
+ * Defaults to a new instance created via [rememberNavController].
+ * @param isDarkTheme Boolean flag indicating whether the app is currently in dark mode.
+ * @param onToggleTheme Lambda that toggles between light and dark theme.
+ */
 @Composable
 fun AppNavGraph(
     navController: NavHostController = rememberNavController(),
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit
 ) {
+    // Set the start destination to Splash Screen
     NavHost(navController = navController, startDestination = "splash") {
 
+        /**
+         * Splash Screen destination.
+         * - Loads initial data (sync from API to DB if needed).
+         * - Navigates to the Movie List screen after completion.
+         * - Finishes the activity if needed.
+         */
         composable(
             route = "splash",
             enterTransition = {
@@ -55,10 +80,14 @@ fun AppNavGraph(
                 )
             }
         ) {
+            // Obtain ViewModel via Hilt
             val splashViewModel: SplashViewModel = hiltViewModel()
+
+            // Show Splash UI
             SplashScreen(
                 viewModel = splashViewModel,
                 onNavigateToMovieList = {
+                    // Navigate to movies and clear Splash from back stack
                     navController.navigate("movies") {
                         popUpTo("splash") { inclusive = true }
                     }
@@ -67,6 +96,12 @@ fun AppNavGraph(
             )
         }
 
+        /**
+         * Movie List Screen destination.
+         * - Displays the list/grid of movies.
+         * - Allows navigation to Wishlist or Movie Details.
+         * - Supports theme toggle.
+         */
         composable(
             route = "movies",
             enterTransition = {
@@ -95,6 +130,7 @@ fun AppNavGraph(
             }
         ) {
             val movieListViewModel: MovieListViewModel = hiltViewModel()
+
             MovieListScreen(
                 viewModel = movieListViewModel,
                 onNavigateToWishlist = { navController.navigate("wishlist") },
@@ -106,6 +142,14 @@ fun AppNavGraph(
             )
         }
 
+        /**
+         * Movie Details Screen destination.
+         * - Displays full details of a selected movie.
+         * - Handles navigation back or to Wishlist.
+         *
+         * @param id Movie ID to load details for.
+         * @param isFromWishlist Boolean indicating if the screen was opened from the Wishlist.
+         */
         composable(
             route = "details?id={id}&isFromWishlist={isFromWishlist}",
             arguments = listOf(
@@ -139,7 +183,9 @@ fun AppNavGraph(
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getInt("id") ?: -1
             val isFromWishlist = backStackEntry.arguments?.getBoolean("isFromWishlist") ?: false
+
             val movieDetailsViewModel: MovieDetailsViewModel = hiltViewModel()
+
             MovieDetailsScreen(
                 movieId = id,
                 viewModel = movieDetailsViewModel,
@@ -151,6 +197,11 @@ fun AppNavGraph(
             )
         }
 
+        /**
+         * Wishlist Screen destination.
+         * - Displays all movies marked as wishlist items.
+         * - Allows navigation to Movie Details or back to the previous screen.
+         */
         composable(
             route = "wishlist",
             enterTransition = {
@@ -179,6 +230,7 @@ fun AppNavGraph(
             }
         ) {
             val wishlistViewModel: WishlistViewModel = hiltViewModel()
+
             WishlistScreen(
                 viewModel = wishlistViewModel,
                 onNavigateToDetails = { movieId ->

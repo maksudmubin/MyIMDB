@@ -18,6 +18,23 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for the Movie List screen implementing the MVI (Model-View-Intent) pattern.
+ *
+ * Responsibilities:
+ * - Handles incoming [MovieListIntent] actions from the UI.
+ * - Manages the immutable [MovieListState] representing the UI.
+ * - Loads movies, genres, wishlist data with pagination, filtering, and search.
+ * - Updates wishlist status and toggles between grid and list views.
+ *
+ * @property getAllGenres Use case to fetch all available movie genres.
+ * @property getMoviesPaginated Use case to fetch movies paginated without filters.
+ * @property getMoviesByGenrePaginated Use case to fetch paginated movies by genre.
+ * @property getMoviesByQueryPaginated Use case to fetch paginated movies by search query.
+ * @property getMoviesByQueryAndGenrePaginated Use case to fetch paginated movies filtered by both genre and search query.
+ * @property getWishlist Use case to retrieve the current wishlist movies.
+ * @property updateWishlistStatus Use case to add or remove a movie from the wishlist.
+ */
 @HiltViewModel
 class MovieListViewModel @Inject constructor(
     private val getAllGenres: GetAllGenresUseCase,
@@ -29,18 +46,32 @@ class MovieListViewModel @Inject constructor(
     private val updateWishlistStatus: UpdateWishlistStatusUseCase
 ) : ViewModel() {
 
+    // Backing mutable state flow for UI state
     private val _uiState = MutableStateFlow(MovieListState())
+
+    /**
+     * Public immutable UI state flow to be observed by the UI.
+     */
     val uiState: StateFlow<MovieListState> = _uiState.asStateFlow()
 
+    // Pagination offset for loading movies page by page
     private var currentOffset = 0
+
+    // Number of movies per page
     private val pageSize = 10
 
     init {
+        // Initial data load when ViewModel is created
         loadGenres()
         loadWishlist()
         loadNextPage()
     }
 
+    /**
+     * Processes incoming UI intents and routes them to appropriate handlers.
+     *
+     * @param intent The [MovieListIntent] representing a user or system action.
+     */
     fun handleIntent(intent: MovieListIntent) {
         when (intent) {
             is MovieListIntent.LoadNextPage -> loadNextPage()
@@ -52,6 +83,10 @@ class MovieListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Loads all available movie genres asynchronously
+     * and updates the UI state.
+     */
     private fun loadGenres() {
         viewModelScope.launch {
             val genres = getAllGenres()
@@ -59,6 +94,10 @@ class MovieListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Loads the current wishlist movies asynchronously
+     * and updates the UI state.
+     */
     private fun loadWishlist() {
         viewModelScope.launch {
             val wishlistMovies = getWishlist()
@@ -66,6 +105,12 @@ class MovieListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Loads the next page of movies based on the current
+     * filters and pagination offset.
+     *
+     * Prevents concurrent loads by checking if loading is already in progress.
+     */
     private fun loadNextPage() {
         if (_uiState.value.isLoading) return
 
@@ -100,11 +145,18 @@ class MovieListViewModel @Inject constructor(
 
             currentOffset += pageSize
 
+            // Append new movies to the existing list
             val updatedList = state.movies + newMovies
             _uiState.update { it.copy(movies = updatedList, isLoading = false) }
         }
     }
 
+    /**
+     * Handles the event when a genre is selected or cleared.
+     * Resets pagination and clears movies before loading new results.
+     *
+     * @param genre The selected genre filter or `null` to clear filter.
+     */
     private fun onGenreSelected(genre: String?) {
         currentOffset = 0
         _uiState.update {
@@ -118,6 +170,12 @@ class MovieListViewModel @Inject constructor(
         loadNextPage()
     }
 
+    /**
+     * Handles changes to the search query.
+     * Resets pagination and clears movies before loading filtered results.
+     *
+     * @param query The new search string entered by the user.
+     */
     private fun onSearchQueryChanged(query: String) {
         currentOffset = 0
         _uiState.update {
@@ -130,21 +188,35 @@ class MovieListViewModel @Inject constructor(
         loadNextPage()
     }
 
+    /**
+     * Toggles the wishlist status of a given movie.
+     * Refreshes the wishlist state after updating.
+     *
+     * @param movieId The ID of the movie to update.
+     * @param status `true` to add to wishlist, `false` to remove.
+     */
     private fun onToggleWishlist(movieId: Int, status: Boolean) {
         viewModelScope.launch {
             try {
                 updateWishlistStatus(movieId, status)
-                loadWishlist() // Refresh wishlist state
+                loadWishlist() // Refresh wishlist after update
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
         }
     }
 
+    /**
+     * Toggles between grid and list view types.
+     */
     private fun toggleViewType() {
         _uiState.update { it.copy(isGridView = !it.isGridView) }
     }
 
+    /**
+     * Refreshes the movie list by clearing existing data,
+     * resetting pagination, and loading fresh data.
+     */
     private fun refresh() {
         currentOffset = 0
         _uiState.update {

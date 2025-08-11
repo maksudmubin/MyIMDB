@@ -54,6 +54,20 @@ import com.mubin.domain.model.Movie
 import com.mubin.presentation.R
 import com.mubin.presentation.ui.screen.movie_list.AnimatedWishlistButton
 
+/**
+ * Composable screen for displaying the details of a specific movie.
+ *
+ * This screen:
+ * - Observes [MovieDetailsState] from [MovieDetailsViewModel] using `collectAsState()`.
+ * - Dispatches [MovieDetailsIntent.LoadMovie] when the screen is launched.
+ * - Displays loading, error, empty, or content states based on [uiState].
+ * - Allows toggling the wishlist status and navigating to the wishlist screen.
+ *
+ * @param movieId The ID of the movie to display.
+ * @param viewModel The [MovieDetailsViewModel] handling state and intents.
+ * @param onNavigateToWishlist Callback to navigate to the wishlist screen.
+ * @param onBackClick Callback to navigate back to the previous screen.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieDetailsScreen(
@@ -62,8 +76,10 @@ fun MovieDetailsScreen(
     onNavigateToWishlist: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    // Observe the UI state from the ViewModel
     val uiState by viewModel.uiState.collectAsState()
 
+    // Trigger movie loading when the movieId changes or the screen is launched
     LaunchedEffect(movieId) {
         viewModel.handleIntent(MovieDetailsIntent.LoadMovie(movieId))
     }
@@ -88,9 +104,11 @@ fun MovieDetailsScreen(
                     Box(
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
+                        // Wishlist navigation button
                         IconButton(onClick = onNavigateToWishlist) {
                             Icon(Icons.Default.Favorite, contentDescription = "Wishlist")
                         }
+                        // Wishlist count badge (shown if count > 0)
                         if (uiState.wishlistCount > 0) {
                             Box(
                                 modifier = Modifier
@@ -121,6 +139,7 @@ fun MovieDetailsScreen(
     ) { innerPadding ->
 
         when {
+            // Loading state
             uiState.isLoading -> {
                 Box(
                     modifier = Modifier
@@ -132,6 +151,7 @@ fun MovieDetailsScreen(
                 }
             }
 
+            // Error state
             uiState.error != null -> {
                 Box(
                     modifier = Modifier
@@ -143,6 +163,7 @@ fun MovieDetailsScreen(
                 }
             }
 
+            // Content state (movie loaded successfully)
             uiState.movie != null -> {
                 uiState.movie?.let { movie ->
                     MovieDetailsContent(
@@ -158,6 +179,7 @@ fun MovieDetailsScreen(
                 }
             }
 
+            // Empty state (no movie found)
             else -> {
                 Box(
                     modifier = Modifier
