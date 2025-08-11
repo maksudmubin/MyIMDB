@@ -3,6 +3,7 @@ package com.mubin.presentation.ui.screen.movie_details
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mubin.domain.usecase.GetMovieByIdUseCase
+import com.mubin.domain.usecase.GetTotalWishlistCountUseCase
 import com.mubin.domain.usecase.IsMovieInWishlistUseCase
 import com.mubin.domain.usecase.UpdateWishlistStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +18,8 @@ import javax.inject.Inject
 class MovieDetailsViewModel @Inject constructor(
     private val getMovieById: GetMovieByIdUseCase,
     private val updateWishlistStatus: UpdateWishlistStatusUseCase,
-    private val isMovieInWishlist: IsMovieInWishlistUseCase
+    private val isMovieInWishlist: IsMovieInWishlistUseCase,
+    private val getWishlistCount: GetTotalWishlistCountUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MovieDetailsState())
@@ -27,6 +29,7 @@ class MovieDetailsViewModel @Inject constructor(
         when (intent) {
             is MovieDetailsIntent.LoadMovie -> {
                 loadMovieById(intent.id)
+                loadWishlistCount()
             }
             is MovieDetailsIntent.ToggleWishlist -> {
                 updateWishlist(intent.movieId, intent.status)
@@ -62,12 +65,19 @@ class MovieDetailsViewModel @Inject constructor(
     private fun updateWishlist(movieId: Int, status: Boolean) {
         viewModelScope.launch {
             updateWishlistStatus(movieId, status)
-            // Update wishlist flag locally without fetching whole wishlist
             _uiState.update { currentState ->
                 if (currentState.movie?.id == movieId) {
                     currentState.copy(isInWishlist = status)
                 } else currentState
             }
+            loadWishlistCount()
+        }
+    }
+
+    private fun loadWishlistCount() {
+        viewModelScope.launch {
+            val count = getWishlistCount()
+            _uiState.update { it.copy(wishlistCount = count) }
         }
     }
 }
