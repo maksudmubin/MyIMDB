@@ -1,6 +1,8 @@
 package com.mubin.presentation.ui.navigation
 
 import android.app.Activity
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -26,7 +28,33 @@ fun AppNavGraph(
 ) {
     NavHost(navController = navController, startDestination = "splash") {
 
-        composable("splash") {
+        composable(
+            route = "splash",
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) {
             val splashViewModel: SplashViewModel = hiltViewModel()
             SplashScreen(
                 viewModel = splashViewModel,
@@ -39,7 +67,33 @@ fun AppNavGraph(
             )
         }
 
-        composable("movies") {
+        composable(
+            route = "movies",
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) {
             val movieListViewModel: MovieListViewModel = hiltViewModel()
             MovieListScreen(
                 viewModel = movieListViewModel,
@@ -56,11 +110,32 @@ fun AppNavGraph(
             route = "details?id={id}&isFromWishlist={isFromWishlist}",
             arguments = listOf(
                 navArgument("id") { type = NavType.IntType },
-                navArgument("isFromWishlist") {
-                    type = NavType.BoolType
-                    defaultValue = false
-                }
-            )
+                navArgument("isFromWishlist") { type = NavType.BoolType; defaultValue = false }
+            ),
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getInt("id") ?: -1
             val isFromWishlist = backStackEntry.arguments?.getBoolean("isFromWishlist") ?: false
@@ -76,7 +151,33 @@ fun AppNavGraph(
             )
         }
 
-        composable("wishlist") {
+        composable(
+            route = "wishlist",
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                )
+            }
+        ) {
             val wishlistViewModel: WishlistViewModel = hiltViewModel()
             WishlistScreen(
                 viewModel = wishlistViewModel,
