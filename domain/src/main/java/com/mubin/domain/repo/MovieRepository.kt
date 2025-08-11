@@ -103,6 +103,13 @@ interface MovieRepository {
     suspend fun isMovieInWishlist(id: Int): Boolean
 
     /**
+     * Retrieves the total number of movies in the wishlist.
+     *
+     * @return The count of movies in the wishlist.
+     */
+    suspend fun getWishlistCount(): Int
+
+    /**
      * Retrieves all genres available in the database.
      *
      * @return List of genre names as strings.
