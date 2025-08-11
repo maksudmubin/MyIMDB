@@ -230,7 +230,7 @@ fun MovieListScreen(
                         onGenreSelected = { genre ->
                             viewModel.handleIntent(
                                 MovieListIntent.SelectGenre(
-                                    if (genre.isBlank()) null else genre
+                                    genre.ifBlank { null }
                                 )
                             )
                         }

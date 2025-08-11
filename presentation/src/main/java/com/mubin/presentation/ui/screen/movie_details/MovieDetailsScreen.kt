@@ -60,7 +60,7 @@ import com.mubin.presentation.ui.screen.movie_list.AnimatedWishlistButton
  * This screen:
  * - Observes [MovieDetailsState] from [MovieDetailsViewModel] using `collectAsState()`.
  * - Dispatches [MovieDetailsIntent.LoadMovie] when the screen is launched.
- * - Displays loading, error, empty, or content states based on [uiState].
+ * - Displays loading, error, empty, or content states based on [MovieDetailsViewModel.uiState].
  * - Allows toggling the wishlist status and navigating to the wishlist screen.
  *
  * @param movieId The ID of the movie to display.
