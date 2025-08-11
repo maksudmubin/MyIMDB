@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mubin.presentation.R
-import com.mubin.presentation.ui.HomeViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -37,11 +36,11 @@ import kotlinx.coroutines.launch
  * Responsibilities:
  * - Checks if this is the first app launch.
  * - Shows a "No Internet" dialog if there is no connection on first launch.
- * - Triggers initial data sync via the [HomeViewModel].
+ * - Triggers initial data sync via the [SplashViewModel].
  * - Navigates to the movie list screen once data sync is complete.
  * - Shows error dialogs with retry/exit options if sync fails.
  *
- * @param viewModel The [HomeViewModel] to interact with for data and state
+ * @param viewModel The [SplashViewModel] to interact with for data and state
  * @param onNavigateToMovieList Callback invoked when splash finishes and navigates to movie list
  * @param onFinish Callback invoked to exit or finish splash (e.g. on user exit)
  */
