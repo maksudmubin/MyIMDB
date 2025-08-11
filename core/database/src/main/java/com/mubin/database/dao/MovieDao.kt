@@ -129,4 +129,12 @@ interface MovieDao {
      */
     @Query("SELECT * FROM movies WHERE isInWishlist = 1 ORDER BY year DESC")
     suspend fun getWishlist(): List<MovieEntity>
+
+    /**
+     * Returns the total number of movies currently in the wishlist.
+     *
+     * @return The count of movies in the wishlist.
+     */
+    @Query("SELECT COUNT(*) FROM movies WHERE isInWishlist = 1")
+    suspend fun getWishlistCount() : Int
 }
