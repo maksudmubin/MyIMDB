@@ -136,6 +136,13 @@ class MovieRepositoryImpl(
         return isInWishlist
     }
 
+    /** @return The count of movies in the wishlist. */
+    override suspend fun getWishlistCount(): Int {
+        val count = movieDao.getWishlistCount()
+        MyImdbLogger.d("MovieRepositoryImpl", "Wishlist count fetched: $count")
+        return count
+    }
+
     /** Retrieves all genres as strings from the database. */
     override suspend fun getAllGenres(): List<String> {
         val genres = genreDao.getAllGenres().map { it.toDomain() }
