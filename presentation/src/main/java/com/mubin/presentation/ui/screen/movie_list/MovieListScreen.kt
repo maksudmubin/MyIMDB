@@ -82,7 +82,6 @@ import coil.compose.AsyncImage
 import com.mubin.common.utils.logger.MyImdbLogger
 import com.mubin.domain.model.Movie
 import com.mubin.presentation.R
-import com.mubin.presentation.ui.HomeViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
@@ -95,7 +94,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * - Theme toggle button
  * - Navigation to movie details and wishlist
  *
- * @param viewModel The [HomeViewModel] providing UI state and actions
+ * @param viewModel The [MovieListViewModel] providing UI state and actions
  * @param onNavigateToWishlist Callback when wishlist icon is clicked
  * @param onNavigateToDetails Callback when a movie item is clicked, passes selected [Movie]
  * @param isDarkTheme Current theme mode flag
@@ -211,7 +210,12 @@ fun MovieListScreen(
                                     color = Color.White,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    textAlign = TextAlign.Center
+                                    textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        platformStyle = PlatformTextStyle(
+                                            includeFontPadding = false
+                                        )
+                                    )
                                 )
                             }
                         }
